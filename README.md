@@ -63,7 +63,7 @@ text learners wrote when explaining hints.
 
 ## Content and its accuracy
 
-80 lessons in 20 units (see `docs/SYLLABUS.md`). Each lesson has teach cards, step-through code
+104 lessons in 26 units (see `docs/SYLLABUS.md`). Each lesson has teach cards, step-through code
 tracing, six kinds of practice (choose, predict the output, fill the gap, put lines in order, find
 the bug, write code), a worked example and a pool of check items for solo and memory checks.
 

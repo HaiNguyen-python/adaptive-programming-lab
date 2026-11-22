@@ -1,6 +1,6 @@
 # PhD Programming Lab syllabus
 
-Four courses, 80 lessons. Each lesson teaches one concept. A lesson may only use what earlier lessons of
+Four courses, 104 lessons. Each lesson teaches one concept. A lesson may only use what earlier lessons of
 the same course have taught (plus its own new idea). Lesson ids and unit ids are fixed: saved progress
 depends on them.
 
@@ -57,6 +57,22 @@ taught, and end with a `write` item that puts the whole program together.
 | `py-errors` | When things go wrong: try and except | handling errors with try and except |
 | `py-word-counter` | Build: a word counter | combining text methods, loops and dictionaries |
 
+### Unit 7, Data toolkit: `u7-data-toolkit.js` (`py-u7`)
+| id | title | concept |
+|---|---|---|
+| `py-tuples-sets` | Tuples and sets | using tuples and sets |
+| `py-nested-data` | Data inside data | reading nested lists and dictionaries |
+| `py-comprehensions` | Build a list in one line | building lists with list comprehensions |
+| `py-grade-book` | Build: a grade book | combining nested data, functions and comprehensions |
+
+### Unit 8, Think like a programmer: `u8-thinking-like-a-programmer.js` (`py-u8`)
+| id | title | concept |
+|---|---|---|
+| `py-search` | Find it: searching a list | searching a list with a loop |
+| `py-sorting` | Put it in order: sorting | putting items in order with sorting |
+| `py-recursion` | A function that calls itself | recursion, a function that calls itself |
+| `py-debugging` | Build: a bug hunter | finding and fixing bugs |
+
 ## JavaScript (`content/javascript/`)
 
 ### Unit 1, First steps: `u1-first-steps.js` (`js-u1`)
@@ -107,6 +123,14 @@ taught, and end with a `write` item that puts the whole program together.
 | `js-reduce-find` | Find, check and add up | finding items and adding up with find, some, every and reduce |
 | `js-shopping-report` | Build: a shopping report | combining arrays of objects with map, filter and reduce |
 
+### Unit 7, Modern JavaScript: `u7-modern-js.js` (`js-u7`)
+| id | title | concept |
+|---|---|---|
+| `js-destructuring-spread` | Unpack and copy with destructuring and spread | unpacking values with destructuring and copying with spread |
+| `js-errors` | When things go wrong: try and catch | handling errors with try, catch and throw |
+| `js-json` | Save data as text with JSON | turning data into text and back with JSON |
+| `js-todo-app` | Build: a to-do list | combining functions, array methods and objects |
+
 ## SQL (`content/sql/`)
 
 All lessons query the camp shop database in `content/sql/db.js`.
@@ -151,6 +175,14 @@ All lessons query the camp shop database in `content/sql/db.js`.
 | `sql-distinct-union` | Stack lists with UNION | stacking two result lists with UNION |
 | `sql-camp-report` | Build: the camp report | combining joins, grouping, CASE and a subquery |
 
+### Unit 6, Designing data: `u6-designing-data.js` (`sql-u6`)
+| id | title | concept |
+|---|---|---|
+| `sql-alter-table` | Add a column with ALTER TABLE | adding a column with ALTER TABLE |
+| `sql-constraints-keys` | Keys and rules that protect data | protecting data with keys and rules |
+| `sql-views-aliases` | Save a query as a VIEW | saving a query as a view and using table aliases |
+| `sql-shop-analysis` | Build: a shop analysis | combining a view, joins, grouping and CASE |
+
 ## HTML & CSS (`content/web/`)
 
 ### Unit 1, HTML basics: `u1-html.js` (`web-u1`)
@@ -184,3 +216,11 @@ All lessons query the camp shop database in `content/sql/db.js`.
 | `web-css-variables` | Reuse a color with CSS variables | storing a value once with CSS variables |
 | `web-transitions-hover` | Hover effects and transitions | changing styles on hover with a transition |
 | `web-signup-card` | Build: a sign-up card | combining forms, variables and hover effects |
+
+### Unit 5, Pages for everyone: `u5-pages-for-everyone.js` (`web-u5`)
+| id | title | concept |
+|---|---|---|
+| `web-semantic-html` | Semantic HTML: elements with meaning | choosing elements that describe the parts of a page |
+| `web-accessibility` | Accessible pages: alt, labels and contrast | making a page easy to use for everyone |
+| `web-tables-lists` | Tables for data | showing data in a table |
+| `web-page-project` | Build: a camp web page | combining page structure, accessible images and a styled table |

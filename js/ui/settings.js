@@ -19,6 +19,7 @@ const group = (title, ...rows) => h('section.set-group', h('h2', title), rows);
 export function settingsPage(root) {
   const state = store.state;
   const s = state.settings;
+  const study = state.study; // in a study the settings that define the condition are fixed
   const set = (fn) => { fn(); save(); applyLook(); setEffects({ sound: s.sound, motion: !s.reduceMotion }); };
   const page = h('div.page', h('div.page-head', h('h1', 'Settings')));
 
@@ -32,8 +33,15 @@ export function settingsPage(root) {
   // ---- learning
   page.append(group('Learning',
     row('Daily goal', 'How much XP you aim for each day.', segmented(GOALS.map((g) => ({ value: g.xp, label: `${g.xp} XP` })), s.dailyGoal, (v) => set(() => { s.dailyGoal = Number(v); }), 'Daily goal')),
-    row('Confidence rating', 'Before a question, Kip asks how sure you are. Afterwards you see how well you judged yourself.',
-      segmented([{ value: 'checks', label: 'Solo checks' }, { value: 'all', label: 'Every question' }, { value: 'off', label: 'Off' }], s.confidence, (v) => set(() => { s.confidence = v; }), 'Confidence rating'))));
+    study ? null : row('Confidence rating', 'Before a question, Kip asks how sure you are. Afterwards you see how well you judged yourself.',
+      segmented([{ value: 'checks', label: 'Solo checks' }, { value: 'all', label: 'Every question' }, { value: 'off', label: 'Off' }], s.confidence, (v) => { set(() => { s.confidence = v; }); log('setting', { name: 'confidence', value: v }); }, 'Confidence rating'))));
+
+  // ---- study (fixed settings)
+  if (study) {
+    page.append(group('Study',
+      h('div.set-row.set-row--col', h('div.grow', h('b', `You are taking part in ${study.id}`),
+        h('span', `Your code is ${study.pid || state.profile.code}. How Kip chooses help, the confidence ratings and the other settings that belong to the study are fixed, so everyone's results can be compared. You can stop at any time: delete this learner below.`)))));
+  }
 
   // ---- help
   const kinds = ['hint', 'explain', 'worked'];
@@ -46,16 +54,17 @@ export function settingsPage(root) {
         return;
       }
       set(() => { s.allow[k] = v; });
+      log('setting', { name: `allow.${k}`, value: v });
     }, HELP_NAME[k]);
     return row(HELP_NAME[k], sub, sw);
   });
-  page.append(group('Help from Kip',
+  if (!study) page.append(group('Help from Kip',
     h('div.set-row.set-row--col',
       h('div.grow', h('b', 'How Kip chooses the help'), h('span', 'Help always comes after you have tried, and it is never the answer.')),
       segmented([{ value: 'adaptive', label: 'Adapts to me' }, { value: 'fixed', label: 'Same order every time' }], s.helpMode, (v) => { set(() => { s.helpMode = v; }); log('setting', { name: 'helpMode', value: v }); note.replaceChildren(md(modeNote(v), 'small.muted')); }, 'How Kip chooses the help'),
       (() => { note = h('div', md(modeNote(s.helpMode), 'small.muted')); return note; })()),
     ...helpRows,
-    row('Walkthrough as a last step', 'When every hint is used and you are still stuck, Kip can show the solution, and you then build it yourself.', switchEl(s.allow.walkthrough, (v) => set(() => { s.allow.walkthrough = v; }), 'Walkthrough'))));
+    row('Walkthrough as a last step', 'When every hint is used and you are still stuck, Kip can show the solution, and you then build it yourself.', switchEl(s.allow.walkthrough, (v) => { set(() => { s.allow.walkthrough = v; }); log('setting', { name: 'allow.walkthrough', value: v }); }, 'Walkthrough'))));
 
   // ---- learners
   const nameInput = h('input.input', { type: 'text', maxlength: '24', value: state.profile.name, 'aria-label': 'Your name' });
@@ -69,7 +78,7 @@ export function settingsPage(root) {
     h('div.set-row', h('div', { style: { width: '56px', flex: 'none' }, html: kipSvg('happy', state.profile.color) }), h('div.grow.stack', nameInput, swatches)),
     ...others.map((p) => h('div.set-row', h('div', { style: { width: '40px', flex: 'none' }, html: kipSvg('happy', p.color) }), h('div.grow', h('b', p.name)),
       h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => { switchProfile(p.id); location.hash = '#/learn'; emitChange(); } }, 'Switch'))),
-    h('div.set-row', h('div.grow', h('b', 'Add a learner'), h('span', 'Each learner has their own progress.')),
+    study ? null : h('div.set-row', h('div.grow', h('b', 'Add a learner'), h('span', 'Each learner has their own progress.')),
       h('button.btn.btn--ghost.btn--sm', { type: 'button', html: iconSvg('plus'), onclick: () => {
         saveNow();
         openWelcome({ onDone: () => { location.hash = '#/learn'; emitChange(); }, onCancel: () => {} });
@@ -111,16 +120,16 @@ export function settingsPage(root) {
       h('span', 'Progress, answers, help requests and confidence ratings are saved on this device only. Nothing is sent anywhere. You can download a copy, for example to share with a teacher or a researcher.')),
       h('div.row-wrap',
         h('button.btn.btn--ghost.btn--sm', { type: 'button', html: iconSvg('download'), onclick: async () => { const n = await exportJson(state); toast(`Downloaded ${n} events as JSON.`, 'download'); } }, 'Download (JSON)'),
-        h('button.btn.btn--ghost.btn--sm', { type: 'button', html: iconSvg('table'), onclick: async () => { const n = await exportCsv(state); toast(`Downloaded ${n} events as two CSV files.`, 'download'); } }, 'Download (CSV)')),
+        h('button.btn.btn--ghost.btn--sm', { type: 'button', html: iconSvg('table'), onclick: async () => { const n = await exportCsv(state); toast(`Downloaded ${n} events as three CSV files.`, 'download'); } }, 'Download (CSV)')),
       h('span.small.muted', `Downloads use the code ${state.profile.code} instead of your name. They include what you wrote when explaining hints.`)),
-    h('details.set-row.set-row--col', h('summary', { style: { fontWeight: '600', cursor: 'pointer' } }, 'For researchers and teachers'),
+    h('details.set-row.set-row--col', h('summary', { style: { fontWeight: '600', cursor: 'pointer' } }, study ? 'How help is chosen' : 'For researchers and teachers'),
       h('div.stack', { style: { marginTop: '10px' } },
         md(`Help policy **${POLICY_VERSION}**: a contextual bandit (Thompson sampling) chooses between a hint, a hint with a self-explanation prompt and a worked example. The context is prior knowledge of the concept and the number of failed attempts. The reward is unaided success on the check item after the help, minus a cost for more specific help (worked example 2, hints 1). Next-day and one-week unaided checks update the same beliefs. Every decision is logged with the probability of each option.`, 'small'),
-        h('div.row', h('span.grow.small', 'Minimum chance of each kind of help (0.2 keeps every option in play, as in a micro-randomised trial)'), floorInput),
-        h('div.row', h('span.grow.small', 'How much the cost of more specific help counts'), costInput),
-        h('div.callout.callout--warn.stack', h('b', 'Testing tool: move the clock'), h('span.small', 'Memory checks open the next day and after a week. Use this to try them without waiting. It only lasts until you close this tab.'),
+        study ? null : h('div.row', h('span.grow.small', 'Minimum chance of each kind of help (0.2 keeps every option in play, as in a micro-randomised trial)'), floorInput),
+        study ? null : h('div.row', h('span.grow.small', 'How much the cost of more specific help counts'), costInput),
+        study ? null : h('div.callout.callout--warn.stack', h('b', 'Testing tool: move the clock'), h('span.small', 'Memory checks open the next day and after a week. Use this to try them without waiting. It only lasts until you close this tab.'),
           h('div.row-wrap', h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => shift(1) }, 'One day later'), h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => shift(7) }, 'One week later'), h('button.btn.btn--quiet.btn--sm', { type: 'button', onclick: () => shift(0) }, 'Reset the clock')), shiftLabel))),
-    row('Start over', 'Remove all progress for this learner. Settings are kept.', h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: async () => {
+    study ? null : row('Start over', 'Remove all progress for this learner. Settings are kept.', h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: async () => {
       if (!await confirmSheet({ title: 'Start over?', text: `This removes all lessons, flames, XP and badges for **${state.profile.name}** on this device. It cannot be undone.`, yes: 'Remove my progress', danger: true })) return;
       await clearEvents(state.profile.id);
       resetProgress();

@@ -31,6 +31,7 @@ export function newState(profile) {
     profile,                 // { id, name, color, code, createdAt }
     settings: structuredClone(DEFAULT_SETTINGS),
     onboarded: false,
+    study: null,             // set when the learner was enrolled in a study: { id, pid, cond, ... }
     course: null,
     xp: 0,
     days: {},                // 'YYYY-MM-DD' -> XP earned that day

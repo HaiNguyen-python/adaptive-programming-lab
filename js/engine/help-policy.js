@@ -18,6 +18,8 @@
 import { sampleBeta, sampleFrom } from './rng.js';
 
 export const POLICY_VERSION = 'thompson-floor-1';
+/** Version of the logged data format (see docs/RESEARCH_DATA.md). Raise it when a field changes meaning. */
+export const DATA_VERSION = 2;
 export const ARMS = ['hint', 'explain', 'worked'];
 export const HELP_COST = { hint: 1, explain: 1, worked: 2 };
 export const HELP_NAME = { hint: 'Hint', explain: 'Hint to explain', worked: 'Worked example', walkthrough: 'Walkthrough' };
@@ -79,7 +81,10 @@ export function chooseHelp({ mode, arms, bandit, key, floor = 0.2, costWeight = 
   const f = Math.max(0, Math.min(floor, 1 / k));
   const probs = {};
   for (const a of arms) probs[a] = round4(f + (1 - f * k) * (wins[a] / draws));
-  return { arm: sampleFrom(rng, probs), probs, policy };
+  // The posterior beliefs and the uniform draw are returned so each decision can be audited and replayed.
+  const posterior = Object.fromEntries(arms.map((a) => [a, [round4(st[a][0]), round4(st[a][1])]]));
+  const u = round4(rng());
+  return { arm: sampleFrom(rng, probs, u), probs, policy, posterior, u };
 }
 
 /** Learn from an outcome: reward is 1 (passed the unaided check) or 0. */

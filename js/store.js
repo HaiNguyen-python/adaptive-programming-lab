@@ -124,9 +124,10 @@ export function importProfile(state) {
 
 /** Start again: keeps the learner and their settings, removes all progress. */
 export function resetProgress() {
-  const { profile, settings } = store.state;
+  const { profile, settings, study } = store.state;
   store.state = newState(profile);
   store.state.settings = settings;
+  store.state.study = study || null;
   store.state.onboarded = true;
   saveNow();
 }

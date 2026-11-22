@@ -127,7 +127,7 @@ export function progress(session) {
  * item: { fails, hintsUsed, workedUsed, helps } for the current item.
  * Returns { decision, hint, worked } or null when no help is left.
  */
-export function requestHelp({ session, state, lesson, entry, item, now, rng, log }) {
+export function requestHelp({ session, state, lesson, entry, item, now, rng, log, shift = 0 }) {
   const settings = state.settings;
   const concept = getConcept(state, lesson.id);
   const arms = availableArms(entry.item, lesson, { hints: item.hintsUsed, worked: item.workedUsed }, settings.allow);
@@ -139,10 +139,13 @@ export function requestHelp({ session, state, lesson, entry, item, now, rng, log
     id: uid('d', now), t: now, sessionId: session.id, lessonId: lesson.id, itemId: entry.item.id,
     key, pk, errors: item.fails, helpsBefore: item.helps.length, pL: Math.round(concept.pL * 1000) / 1000,
     arms, probs: choice.probs, arm: choice.arm, policy: choice.policy, cost: HELP_COST[choice.arm],
+    // Everything needed to recompute the probabilities and the draw (off-policy evaluation, audits).
+    floor: settings.floor, costWeight: settings.costWeight, posterior: choice.posterior || null, u: choice.u ?? null,
+    cond: state.study ? state.study.cond : null, shift: shift || 0, allow: { ...settings.allow },
     proximal: null, nextDay: null, week: null,
   };
   state.decisions.push(decision);
-  if (state.decisions.length > 400) state.decisions.splice(0, state.decisions.length - 400);
+  if (state.decisions.length > 1000) state.decisions.splice(0, state.decisions.length - 1000);
   state.counters.helps[choice.arm]++;
   if (log) log('help_decision', { ...decision });
   return {
@@ -194,7 +197,11 @@ export function recordItem({ session, state, outcome, now, log }) {
       for (const d of state.decisions) {
         if (d.lessonId === entry.lessonId && d.sessionId === session.id && d.proximal === null) {
           d.proximal = ok;
+          d.proximalRole = entry.role;      // 'helpcheck' is the intended check; 'final' or 'retry' came later
+          d.proximalItemId = item.id;
+          d.proximalAt = now;
           updateBandit(state.bandit, d.key, d.arm, ok, 1);
+          if (log) log('help_outcome', { decision: d.id, kind: 'proximal', value: ok, role: entry.role, itemId: item.id, lessonId: d.lessonId, arm: d.arm, sinceMs: now - d.t });
         }
       }
       // Delayed outcomes: the next-day check and the main one-week check.
@@ -202,8 +209,16 @@ export function recordItem({ session, state, outcome, now, log }) {
         const today = startOfDay(now);
         for (const d of state.decisions) {
           if (d.lessonId !== entry.lessonId || d.t >= today) continue;
-          if (stageBefore === 1 && d.nextDay === null) { d.nextDay = ok; updateBandit(state.bandit, d.key, d.arm, ok, 0.5); }
-          else if (stageBefore === 2 && d.week === null) { d.week = ok; updateBandit(state.bandit, d.key, d.arm, ok, 1); }
+          const gapDays = daysBetween(d.t, now);
+          if (stageBefore === 1 && d.nextDay === null) {
+            d.nextDay = ok; d.nextDayGap = gapDays;
+            updateBandit(state.bandit, d.key, d.arm, ok, 0.5);
+            if (log) log('help_outcome', { decision: d.id, kind: 'nextDay', value: ok, role: entry.role, itemId: item.id, lessonId: d.lessonId, arm: d.arm, gapDays });
+          } else if (stageBefore === 2 && d.week === null) {
+            d.week = ok; d.weekGap = gapDays;
+            updateBandit(state.bandit, d.key, d.arm, ok, 1);
+            if (log) log('help_outcome', { decision: d.id, kind: 'week', value: ok, role: entry.role, itemId: item.id, lessonId: d.lessonId, arm: d.arm, gapDays });
+          }
         }
         res.memory = { ...applyMemoryCheck(concept, res.firstTry, now), stageBefore };
       }

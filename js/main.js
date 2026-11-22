@@ -13,6 +13,7 @@ import { labPage } from './ui/lab.js';
 import { mePage } from './ui/me.js';
 import { settingsPage } from './ui/settings.js';
 import { openWelcome } from './ui/welcome.js';
+import { readStudyParams, setPendingStudy } from './study.js';
 
 const ROUTES = [
   { id: 'learn', label: 'Learn', icon: 'trail', page: learnPage },
@@ -79,6 +80,10 @@ function render() {
 
 async function boot() {
   initStore();
+  // A study link only enrols someone who has not started yet.
+  const study = readStudyParams(location.search);
+  if (study && !(store.state && store.state.onboarded)) setPendingStudy(study);
+  else if (study) history.replaceState(null, '', location.pathname + location.hash);
   applyLook();
   await loadCatalog();
   window.addEventListener('hashchange', render);

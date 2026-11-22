@@ -74,9 +74,9 @@ export function sampleBeta(rng, a, b) {
 }
 
 /** Pick a key of probs ({ key: probability }) in proportion to its probability. */
-export function sampleFrom(rng, probs) {
+export function sampleFrom(rng, probs, u = rng()) {
   const keys = Object.keys(probs);
-  let r = rng();
+  let r = u;
   for (const k of keys) {
     r -= probs[k];
     if (r < 0) return k;

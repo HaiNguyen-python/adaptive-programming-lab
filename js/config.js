@@ -20,6 +20,17 @@ export const RUNTIME = {
   loadTimeoutMs: 60000,
 };
 
+/**
+ * Shown to participants who open a study link (see js/study.js). Fill in your own details and make sure the
+ * wording matches your ethics approval. If `contact` is empty that line is left out.
+ */
+export const STUDY_INFO = {
+  version: 1,
+  title: 'Taking part in a research study',
+  contact: '',   // for example: 'Name, email address'
+  ethics: '',    // for example: 'Approved by the university research ethics committee, statement number'
+};
+
 export const RESEARCH = {
   title: 'The Cost of Easy Answers',
   subtitle: 'Adaptive help from large language model tutors for durable learning and accurate self-assessment in programming education',

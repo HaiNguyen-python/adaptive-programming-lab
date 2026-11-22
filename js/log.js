@@ -4,8 +4,7 @@
  * researcher needs, and it never leaves this device unless the learner exports it in Settings.
  * Stored in IndexedDB; falls back to memory when IndexedDB is not available.
  */
-import { APP } from './config.js';
-import { POLICY_VERSION } from './engine/help-policy.js';
+import { buildJson, eventsCsv, decisionsCsv, checksCsv } from './export.js';
 import { buildBackup } from './backup.js';
 
 const DB_NAME = 'phd-programming-lab';
@@ -97,21 +96,7 @@ const stamp = () => new Date().toISOString().slice(0, 10);
 /** Everything recorded for this learner, as one JSON file. The learner's name is not included. */
 export async function exportJson(state) {
   const events = await readEvents(state.profile.id);
-  const data = {
-    app: APP.name,
-    version: APP.version,
-    exportedAt: new Date().toISOString(),
-    learner: state.profile.code,
-    about: 'Recorded on the learner\'s own device and exported by the learner. The learner is identified by a random code, not by name. Times are milliseconds since 1970-01-01 UTC.',
-    policy: { version: POLICY_VERSION, mode: state.settings.helpMode, floor: state.settings.floor, costWeight: state.settings.costWeight, allow: state.settings.allow, confidence: state.settings.confidence },
-    totals: { xp: state.xp, lessonsDone: Object.values(state.lessons).filter((l) => l.done).length, counters: state.counters },
-    lessons: state.lessons,
-    concepts: state.concepts,
-    decisions: state.decisions,
-    bandit: state.bandit,
-    events: events.map(({ p, ...rest }) => rest),
-  };
-  download(`phd-programming-lab-${state.profile.code}-${stamp()}.json`, JSON.stringify(data, null, 2), 'application/json');
+  download(`phd-programming-lab-${state.profile.code}-${stamp()}.json`, JSON.stringify(buildJson(state, events), null, 2), 'application/json');
   return events.length;
 }
 
@@ -123,29 +108,12 @@ export async function exportBackup(state) {
   return events.length;
 }
 
-const csvCell = (v) => {
-  if (v === null || v === undefined) return '';
-  const s = typeof v === 'object' ? JSON.stringify(v) : String(v);
-  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-};
-
-function toCsv(rows, columns) {
-  return [columns.join(','), ...rows.map((r) => columns.map((c) => csvCell(r[c])).join(','))].join('\r\n');
-}
-
-const EVENT_COLUMNS = ['time', 't', 'type', 'session', 'kind', 'lesson', 'lessonId', 'itemId', 'role', 'solo', 'attempt', 'firstTry', 'correct', 'attempts', 'helps', 'walkthrough', 'skipped', 'conf', 'ms', 'xp', 'pL', 'stage', 'arm', 'policy', 'pk', 'errors', 'probs', 'chars', 'detail'];
-const DECISION_COLUMNS = ['time', 't', 'id', 'sessionId', 'lessonId', 'itemId', 'policy', 'pk', 'errors', 'helpsBefore', 'pL', 'arms', 'probs', 'arm', 'cost', 'proximal', 'nextDay', 'week'];
-
-/** Two CSV files for analysis: all events, and all help decisions with their outcomes. */
+/** Three CSV files for analysis: all events, help decisions with their outcomes, and unaided checks. */
 export async function exportCsv(state) {
   const events = await readEvents(state.profile.id);
-  const rows = events.map(({ p, ...e }) => {
-    const known = new Set(EVENT_COLUMNS);
-    const detail = Object.fromEntries(Object.entries(e).filter(([k]) => !known.has(k)));
-    return { ...e, time: new Date(e.t).toISOString(), detail: Object.keys(detail).length ? detail : '' };
-  });
-  download(`phd-programming-lab-${state.profile.code}-events-${stamp()}.csv`, toCsv(rows, EVENT_COLUMNS), 'text/csv');
-  const decisions = state.decisions.map((d) => ({ ...d, time: new Date(d.t).toISOString() }));
-  setTimeout(() => download(`phd-programming-lab-${state.profile.code}-help-decisions-${stamp()}.csv`, toCsv(decisions, DECISION_COLUMNS), 'text/csv'), 400);
+  const code = state.profile.code;
+  download(`phd-programming-lab-${code}-events-${stamp()}.csv`, eventsCsv(state, events), 'text/csv');
+  setTimeout(() => download(`phd-programming-lab-${code}-help-decisions-${stamp()}.csv`, decisionsCsv(state), 'text/csv'), 400);
+  setTimeout(() => download(`phd-programming-lab-${code}-unaided-checks-${stamp()}.csv`, checksCsv(state, events), 'text/csv'), 800);
   return events.length;
 }

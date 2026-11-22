@@ -43,14 +43,23 @@ public CDNs the first time they are needed (addresses in `js/config.js`).
 Settings has a **testing tool that moves the clock** forward a day or a week, so memory checks can be
 tried without waiting.
 
+## Using it as a research tool
+
+Study links (`?study=CODE&pid=P01&cond=random`) enrol a participant with consent, assign the help condition
+at random (or as given) and lock the settings that define it. Every help decision logs its probabilities,
+posterior beliefs and random draw; every outcome (next solo check, next day, one week) is logged as its own
+event. `node tools/merge-exports.mjs <folder>` pools participants' exports into analysis-ready CSV files and a
+descriptive report, and `node tools/simulate.mjs` simulates the help policy for planning. Read
+`docs/RESEARCH_DATA.md` first: it has the study workflow, the data dictionary and the known limitations.
+
 ## Data
 
 Everything is stored on the learner's device (local storage and IndexedDB). Nothing is sent anywhere.
 Settings > Research and data can download:
 
 - **JSON**: all events, help decisions with outcomes, mastery records and bandit state.
-- **CSV**: one file of events, one of help decisions (`policy, pk, errors, arms, probs, arm, cost,
-  proximal, nextDay, week`), ready for mixed models or off-policy evaluation.
+- **CSV**: three files: events, help decisions (with probabilities, posterior, outcomes and gaps) and unaided
+  checks (confidence, result, memory stage), ready for mixed models or off-policy evaluation.
 
 **Backup and restore** (Settings > Backup) saves one learner's name, progress, settings and events to a
 JSON file and restores it as a new learner, on this or another device.

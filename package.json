@@ -8,7 +8,9 @@
     "start": "node tools/serve.mjs",
     "verify": "node tools/verify-content.mjs",
     "test": "node --test tests/",
-    "build:sw": "node tools/build-sw.mjs"
+    "build:sw": "node tools/build-sw.mjs",
+    "merge": "node tools/merge-exports.mjs",
+    "simulate": "node tools/simulate.mjs"
   },
   "license": "MIT"
 }

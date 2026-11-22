@@ -12,7 +12,7 @@ import { iconSvg } from '../lib/icons.js';
 import { kip, confFaceSvg, medalSvg, svgEl } from '../lib/art.js';
 import { play, confetti, burst } from '../lib/effects.js';
 import { store, save } from '../store.js';
-import { rng, now, log, tutorCtx, emitChange } from '../app.js';
+import { rng, now, log, tutorCtx, emitChange, clockShift } from '../app.js';
 import * as catalog from '../catalog.js';
 import { isBuildItem } from '../engine/content.js';
 import { current, needsConfidence, requestHelp, recordItem, advance, summarize, progress, stopPlacement, ensureFinished, nextLesson } from '../engine/tutor.js';
@@ -349,7 +349,7 @@ export function openPlayer({ session, course, onClose }) {
 
   function giveHelp() {
     const help = requestHelp({
-      session, state, lesson: it.lesson, entry: it.entry, now: now(), rng, log,
+      session, state, lesson: it.lesson, entry: it.entry, now: now(), rng, log, shift: clockShift(),
       item: { fails: it.fails, hintsUsed: it.hintsUsed, workedUsed: it.workedUsed, helps: it.helps },
     });
     if (!help) { paintBar(); return; }

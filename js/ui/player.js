@@ -83,6 +83,13 @@ export function openPlayer({ session, course, onClose }) {
   function onKey(e) {
     if (closed || document.querySelector('#layer .backdrop')) return;
     if (e.key === 'Escape') { e.preventDefault(); tryClose(); return; }
+    if (/^[1-9]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const tag = e.target && e.target.tagName;
+      if (tag === 'TEXTAREA' || tag === 'INPUT' || (e.target && e.target.isContentEditable)) return;
+      const opt = root.querySelectorAll('.opts .opt')[Number(e.key) - 1];
+      if (opt && !opt.disabled) { e.preventDefault(); opt.click(); }
+      return;
+    }
     if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.metaKey) return;
     const t = e.target;
     if (t && !root.contains(t)) { e.preventDefault(); if (mainBtn && !mainBtn.disabled) mainBtn.click(); return; }

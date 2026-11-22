@@ -49,8 +49,11 @@ Study links (`?study=CODE&pid=P01&cond=random`) enrol a participant with consent
 at random (or as given) and lock the settings that define it. Every help decision logs its probabilities,
 posterior beliefs and random draw; every outcome (next solo check, next day, one week) is logged as its own
 event. `node tools/merge-exports.mjs <folder>` pools participants' exports into analysis-ready CSV files and a
-descriptive report, and `node tools/simulate.mjs` simulates the help policy for planning. Read
-`docs/RESEARCH_DATA.md` first: it has the study workflow, the data dictionary and the known limitations.
+descriptive report, and `node tools/simulate.mjs` simulates the help policy for planning. Settings has a
+**researcher dashboard** (`#/researcher`, hidden for enrolled participants) that shows data health and help
+decisions and pools several participants' exports in the browser. Read `docs/RESEARCH_DATA.md` first: it has
+the study workflow, the data dictionary and the known limitations. `docs/PARTICIPANT_GUIDE.md` and
+`docs/CONSENT_TEMPLATE.md` are fill-in templates (not approved documents).
 
 ## Data
 

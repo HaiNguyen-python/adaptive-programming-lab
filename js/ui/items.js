@@ -124,6 +124,8 @@ function pickOne({ choices, mono, onChange, isRight, why, top }) {
       paint();
       onChange();
     });
+    b.dataset.n = String(buttons.size + 1);
+    b.setAttribute('aria-keyshortcuts', String(buttons.size + 1));
     buttons.set(c.key, b);
     list.append(b);
   }

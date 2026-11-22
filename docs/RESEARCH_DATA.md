@@ -7,7 +7,9 @@ analyse it, and what the data can and cannot support. Data format version: **2**
 
 1. **Host the app** on any static web server (for example GitHub Pages). Participants use their own device;
    there is no server, so nothing is sent anywhere automatically.
-2. **Fill in `STUDY_INFO` in `js/config.js`** (contact and ethics statement). The consent page shows this text.
+2. **Prepare documents**: `docs/CONSENT_TEMPLATE.md` (information sheet and consent) and
+   `docs/PARTICIPANT_GUIDE.md` are templates to adapt and get approved.
+   **Fill in `STUDY_INFO` in `js/config.js`** (contact and ethics statement). The consent page shows this text.
    Adapt the wording in `js/ui/welcome.js` to your approved information sheet and consent form: the text
    in the app is a plain-language starting point, not an approved form.
 3. **Give each participant a link**:
@@ -28,6 +30,8 @@ analyse it, and what the data can and cannot support. Data format version: **2**
 6. **Pool and analyse**:
    `node tools/merge-exports.mjs path/to/exports --out results` writes `participants.csv`,
    `decisions.csv`, `checks.csv`, `report.md` and `summary.json`.
+   The same pooling is available in the app: Settings > For researchers and teachers > Researcher
+   dashboard (`#/researcher`), which also shows data health for the learner on that device.
 7. **Plan**: `node tools/simulate.mjs --learners 60 --decisions 40 --effect 0.15` shows how the policy
    behaves under assumed effects (see section 5).
 

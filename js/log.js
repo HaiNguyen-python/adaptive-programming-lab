@@ -80,7 +80,7 @@ export function clearEvents(profileId) {
   }));
 }
 
-function download(name, text, type) {
+export function download(name, text, type) {
   const url = URL.createObjectURL(new Blob([text], { type }));
   const a = document.createElement('a');
   a.href = url;

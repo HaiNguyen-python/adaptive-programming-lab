@@ -1,0 +1,10 @@
+import u1 from "./u1-first-steps.js";
+import u2 from "./u2-decisions.js";
+import u3 from "./u3-loops.js";
+import u4 from "./u4-collections.js";
+import u5 from "./u5-functions.js";
+
+export default {
+  about: "Python reads almost like English, which makes it a favourite first language. It is used for websites, games, science and artificial intelligence.",
+  units: [u1, u2, u3, u4, u5],
+};

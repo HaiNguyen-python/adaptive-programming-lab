@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en" data-theme="night">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>HaiCodeLab: learn to code and make it stick</title>
+  <meta name="description" content="Learn Python, JavaScript, SQL, HTML and CSS in short lessons that adapt to you. Try first, get a nudge when you need it, and prove a day and a week later that it stuck.">
+  <meta name="theme-color" content="#0B2126">
+  <link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <!-- Fonts: Lexend (reading ease) and JetBrains Mono (clear code). The app works without them. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Lexend:wght@300;400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/app.css">
+  <script>
+    // Set the theme before the first paint to avoid a flash.
+    (function () {
+      try {
+        var p = JSON.parse(localStorage.getItem('hcl.profiles') || 'null');
+        var s = p && p.active ? JSON.parse(localStorage.getItem('hcl.state.' + p.active) || 'null') : null;
+        var t = (s && s.settings && s.settings.theme) || 'auto';
+        if (t === 'auto') t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'day' : 'night';
+        document.documentElement.dataset.theme = t;
+        if (s && s.settings && s.settings.textSize) document.documentElement.dataset.size = s.settings.textSize;
+      } catch (e) { /* first visit */ }
+    })();
+  </script>
+</head>
+<body>
+  <div id="app" class="boot">
+    <div class="boot-mark" aria-hidden="true"></div>
+    <p class="boot-text">Lighting the fire…</p>
+  </div>
+  <div id="layer"></div>
+  <noscript><p style="padding:24px;font-family:sans-serif">HaiCodeLab needs JavaScript to run. Please turn it on in your browser settings.</p></noscript>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

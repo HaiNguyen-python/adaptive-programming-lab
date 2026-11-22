@@ -1,0 +1,13 @@
+{
+  "name": "haicodelab",
+  "version": "1.0.0",
+  "description": "HaiCodeLab: an adaptive programming learning app (Python, JavaScript, SQL, HTML & CSS) built on research into durable learning.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node tools/serve.mjs",
+    "verify": "node tools/verify-content.mjs",
+    "test": "node --test tests/"
+  },
+  "license": "MIT"
+}

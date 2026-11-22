@@ -1,6 +1,6 @@
 {
-  "name": "HaiCodeLab",
-  "short_name": "HaiCodeLab",
+  "name": "PhD Programming Lab",
+  "short_name": "PhD Lab",
   "description": "Learn Python, JavaScript, SQL, HTML and CSS in short lessons that adapt to you.",
   "start_url": "./",
   "display": "standalone",

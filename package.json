@@ -1,7 +1,7 @@
 {
-  "name": "haicodelab",
+  "name": "phd-programming-lab",
   "version": "1.0.0",
-  "description": "HaiCodeLab: an adaptive programming learning app (Python, JavaScript, SQL, HTML & CSS) built on research into durable learning.",
+  "description": "PhD Programming Lab: an adaptive programming learning app (Python, JavaScript, SQL, HTML & CSS) built on research into durable learning.",
   "type": "module",
   "private": true,
   "scripts": {

@@ -1,8 +1,8 @@
 /** App-wide settings. Change the name here and it changes everywhere. */
 export const APP = {
-  name: 'HaiCodeLab',
-  short: 'Hai',
-  rest: 'CodeLab',
+  name: 'PhD Programming Lab',
+  short: 'PhD',
+  rest: 'Programming Lab',
   version: '1.0.0',
   tagline: 'Learn to code. Make it stick.',
   mascot: 'Kip',

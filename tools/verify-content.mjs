@@ -427,7 +427,7 @@ function verifyLesson(course, lesson) {
 let pythonVersion = '';
 function runPythonBatch(list) {
   if (!list.length) return [];
-  const dir = mkdtempSync(path.join(os.tmpdir(), 'haicodelab-'));
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'phd-programming-lab-'));
   const jobsFile = path.join(dir, 'jobs.json');
   const resFile = path.join(dir, 'results.json');
   writeFileSync(jobsFile, JSON.stringify(list.map((j, i) => ({ id: i, code: j.code, trace: j.opts.trace || null, checks: j.opts.checks || [] }))));
@@ -509,7 +509,7 @@ for (const j of jobs) j.cb(j.result);
 
 const errors = problems.filter((p) => p.level === 'error');
 const warnings = problems.filter((p) => p.level === 'warn');
-console.log('HaiCodeLab content check');
+console.log('PhD Programming Lab content check');
 for (const s of stats) console.log(`  ${s.course.padEnd(11)} ${String(s.units).padStart(2)} units  ${String(s.lessons).padStart(3)} lessons  ${String(s.steps).padStart(4)} steps  ${String(s.items).padStart(4)} practice items  ${String(s.pool).padStart(4)} check items`);
 console.log(`  ${jobs.length} code runs${pythonVersion ? ` (Python ${pythonVersion}, Node ${process.versions.node})` : ` (Node ${process.versions.node})`}`);
 for (const p of problems) console.log(`\n${p.level === 'error' ? 'ERROR' : 'warn '}  ${p.where}\n      ${p.msg}`);

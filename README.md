@@ -1,8 +1,8 @@
-# HaiCodeLab
+# PhD Programming Lab
 
 Learn to code. Make it stick.
 
-HaiCodeLab is an adaptive programming-learning app for all ages: short, game-like lessons in
+PhD Programming Lab is an adaptive programming-learning app for all ages: short, game-like lessons in
 **Python, JavaScript, SQL, and HTML & CSS**, with a guide called Kip. It runs entirely in the browser.
 Real Python (Pyodide), real SQLite (sql.js) and sandboxed JavaScript run the learner's code, so every
 output is exactly what the real language produces.

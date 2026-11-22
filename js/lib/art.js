@@ -1,5 +1,5 @@
 /**
- * Drawings made for HaiCodeLab: Kip the spark (the mascot), confidence faces, badges and scenery.
+ * Drawings made for PhD Programming Lab: Kip the spark (the mascot), confidence faces, badges and scenery.
  * Everything is inline SVG text, so it scales cleanly and needs no image files.
  */
 import { iconSvg } from './icons.js';

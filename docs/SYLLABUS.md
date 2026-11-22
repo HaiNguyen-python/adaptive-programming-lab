@@ -1,4 +1,4 @@
-# HaiCodeLab syllabus
+# PhD Programming Lab syllabus
 
 Four courses, 68 lessons. Each lesson teaches one concept. A lesson may only use what earlier lessons of
 the same course have taught (plus its own new idea). Lesson ids and unit ids are fixed: saved progress

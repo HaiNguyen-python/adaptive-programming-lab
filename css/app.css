@@ -1,4 +1,4 @@
-/* HaiCodeLab
+/* PhD Programming Lab
    Visual idea: a trail through a northern forest at night. Each lesson is a lantern you light;
    memory checks keep the fire burning. Spruce night, ember, flame, aurora, lingonberry, sky.
    Type: Lexend for reading ease, JetBrains Mono for code. */
@@ -776,3 +776,8 @@ svg { display: block; }
   .node.is-left .kip-here { right: calc(50% + 30px); }
   .today { grid-template-columns: auto 1fr; gap: 12px; }
 }
+
+/* two-line wordmark: "PhD" over "Programming Lab" */
+.brand svg { flex: none; }
+.brand b { display: block; font-size: 1.02rem; line-height: 1.15; white-space: nowrap; }
+.brand b span { display: block; }

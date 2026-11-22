@@ -7,7 +7,7 @@
 import { APP } from './config.js';
 import { POLICY_VERSION } from './engine/help-policy.js';
 
-const DB_NAME = 'haicodelab';
+const DB_NAME = 'phd-programming-lab';
 const STORE = 'events';
 const memory = [];
 let opening = null;
@@ -95,7 +95,7 @@ export async function exportJson(state) {
     bandit: state.bandit,
     events: events.map(({ p, ...rest }) => rest),
   };
-  download(`haicodelab-${state.profile.code}-${stamp()}.json`, JSON.stringify(data, null, 2), 'application/json');
+  download(`phd-programming-lab-${state.profile.code}-${stamp()}.json`, JSON.stringify(data, null, 2), 'application/json');
   return events.length;
 }
 
@@ -120,8 +120,8 @@ export async function exportCsv(state) {
     const detail = Object.fromEntries(Object.entries(e).filter(([k]) => !known.has(k)));
     return { ...e, time: new Date(e.t).toISOString(), detail: Object.keys(detail).length ? detail : '' };
   });
-  download(`haicodelab-${state.profile.code}-events-${stamp()}.csv`, toCsv(rows, EVENT_COLUMNS), 'text/csv');
+  download(`phd-programming-lab-${state.profile.code}-events-${stamp()}.csv`, toCsv(rows, EVENT_COLUMNS), 'text/csv');
   const decisions = state.decisions.map((d) => ({ ...d, time: new Date(d.t).toISOString() }));
-  setTimeout(() => download(`haicodelab-${state.profile.code}-help-decisions-${stamp()}.csv`, toCsv(decisions, DECISION_COLUMNS), 'text/csv'), 400);
+  setTimeout(() => download(`phd-programming-lab-${state.profile.code}-help-decisions-${stamp()}.csv`, toCsv(decisions, DECISION_COLUMNS), 'text/csv'), 400);
   return events.length;
 }

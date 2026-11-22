@@ -1,4 +1,4 @@
-/** Line icons drawn for HaiCodeLab (24 x 24, stroke = current colour). */
+/** Line icons drawn for PhD Programming Lab (24 x 24, stroke = current colour). */
 
 const S = (d) => `<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</g>`;
 const P = (d) => `<path d="${d}"/>`;

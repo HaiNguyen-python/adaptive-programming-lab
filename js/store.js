@@ -106,6 +106,22 @@ export function deleteProfile(id) {
   saveProfiles();
 }
 
+/**
+ * Add a learner from a backup as a new learner (a new id, so nothing existing is overwritten) and make
+ * them the active learner. Returns the new state.
+ */
+export function importProfile(state) {
+  saveNow();
+  const id = `p${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  const profile = { ...state.profile, id };
+  store.profiles.list.push({ id, name: profile.name, color: profile.color });
+  store.profiles.active = id;
+  store.state = { ...state, profile, onboarded: true };
+  saveProfiles();
+  saveNow();
+  return store.state;
+}
+
 /** Start again: keeps the learner and their settings, removes all progress. */
 export function resetProgress() {
   const { profile, settings } = store.state;

@@ -2,13 +2,14 @@
 import { h, md } from '../lib/dom.js';
 import { iconSvg } from '../lib/icons.js';
 import { kipSvg, KIP_COLORS } from '../lib/art.js';
-import { store, save, saveNow, updateProfile, switchProfile, deleteProfile, resetProgress } from '../store.js';
+import { store, save, saveNow, updateProfile, switchProfile, deleteProfile, resetProgress, importProfile } from '../store.js';
+import { parseBackup } from '../backup.js';
 import { applyLook, emitChange, clockShift, setClockShift, log } from '../app.js';
 import { setEffects, play } from '../lib/effects.js';
 import { APP, RESEARCH } from '../config.js';
 import { GOALS } from '../engine/rewards.js';
 import { HELP_NAME, POLICY_VERSION } from '../engine/help-policy.js';
-import { exportJson, exportCsv, clearEvents } from '../log.js';
+import { exportJson, exportCsv, exportBackup, addEvents, clearEvents } from '../log.js';
 import { segmented, switchEl, confirmSheet, toast } from './common.js';
 import { openWelcome } from './welcome.js';
 
@@ -73,6 +74,30 @@ export function settingsPage(root) {
         saveNow();
         openWelcome({ onDone: () => { location.hash = '#/learn'; emitChange(); }, onCancel: () => {} });
       } }, 'Add'))));
+
+  // ---- backup and restore
+  const fileInput = h('input', { type: 'file', accept: 'application/json,.json', hidden: true, 'aria-label': 'Choose a backup file' });
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files && fileInput.files[0];
+    fileInput.value = '';
+    if (!file) return;
+    try {
+      const { state: restored, events } = parseBackup(await file.text());
+      if (!await confirmSheet({ title: 'Restore this learner?', text: `This adds **${restored.profile.name}** from the backup as a new learner on this device. Your current learners are not changed.`, yes: 'Restore' })) return;
+      const next = importProfile(restored);
+      await addEvents(next.profile.id, events);
+      toast(`Restored ${next.profile.name}.`, 'info');
+      location.hash = '#/learn';
+      emitChange();
+    } catch (err) { toast(err.message || 'The backup could not be restored.', 'info'); }
+  });
+  page.append(group('Backup',
+    h('div.set-row.set-row--col', h('div.grow', h('b', 'Keep your progress safe'),
+      h('span', 'Progress lives only in this browser. Download a backup to move it to another device, or to keep it if the browser data is cleared. Restoring adds the backup as a new learner.')),
+      h('div.row-wrap',
+        h('button.btn.btn--ghost.btn--sm', { type: 'button', html: iconSvg('download'), onclick: async () => { await exportBackup(state); toast(`Backup of ${state.profile.name} downloaded.`, 'download'); } }, 'Download backup'),
+        h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => fileInput.click() }, 'Restore from file'),
+        fileInput))));
 
   // ---- research and data
   const floorInput = h('input.input', { type: 'number', min: '0', max: '0.33', step: '0.05', value: String(s.floor), 'aria-label': 'Minimum chance of each kind of help', style: { width: '110px' } });

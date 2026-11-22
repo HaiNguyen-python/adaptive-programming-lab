@@ -87,6 +87,9 @@ async function boot() {
   render();
 }
 
+// Offline support: only where service workers are allowed (https or localhost).
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+
 boot().catch((err) => {
   console.error(err);
   app.className = 'boot';

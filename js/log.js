@@ -6,6 +6,7 @@
  */
 import { APP } from './config.js';
 import { POLICY_VERSION } from './engine/help-policy.js';
+import { buildBackup } from './backup.js';
 
 const DB_NAME = 'phd-programming-lab';
 const STORE = 'events';
@@ -37,6 +38,21 @@ export function logEvent(profileId, type, data = {}) {
     if (!db) { memory.push(row); return; }
     try { db.transaction(STORE, 'readwrite').objectStore(STORE).add(row); } catch { memory.push(row); }
   });
+}
+
+/** Store many events at once (used when restoring a backup). */
+export function addEvents(profileId, events) {
+  const rows = events.map((e) => ({ ...e, p: profileId }));
+  return open().then((db) => new Promise((resolve) => {
+    if (!db) { memory.push(...rows); resolve(); return; }
+    try {
+      const tx = db.transaction(STORE, 'readwrite');
+      const os = tx.objectStore(STORE);
+      rows.forEach((r) => os.add(r));
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => { memory.push(...rows); resolve(); };
+    } catch { memory.push(...rows); resolve(); }
+  }));
 }
 
 export function readEvents(profileId) {
@@ -96,6 +112,14 @@ export async function exportJson(state) {
     events: events.map(({ p, ...rest }) => rest),
   };
   download(`phd-programming-lab-${state.profile.code}-${stamp()}.json`, JSON.stringify(data, null, 2), 'application/json');
+  return events.length;
+}
+
+/** A full backup of this learner (name, progress, settings, events) that can be restored later. */
+export async function exportBackup(state) {
+  const events = await readEvents(state.profile.id);
+  const safe = state.profile.name.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'learner';
+  download(`phd-programming-lab-backup-${safe}-${stamp()}.json`, JSON.stringify(buildBackup(state, events)), 'application/json');
   return events.length;
 }
 

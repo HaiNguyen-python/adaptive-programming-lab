@@ -1,6 +1,6 @@
 # PhD Programming Lab syllabus
 
-Four courses, 68 lessons. Each lesson teaches one concept. A lesson may only use what earlier lessons of
+Four courses, 80 lessons. Each lesson teaches one concept. A lesson may only use what earlier lessons of
 the same course have taught (plus its own new idea). Lesson ids and unit ids are fixed: saved progress
 depends on them.
 
@@ -49,6 +49,14 @@ taught, and end with a `write` item that puts the whole program together.
 | `py-scope` | Where variables live | local and global variables | variables made inside a function are local; parameters are local; reading a global; a local name does not change a global with the same name |
 | `py-quiz-scorer` | Build: a quiz scorer | combining functions, lists and loops | Build lesson: functions that take a list, loop over it and return a result |
 
+### Unit 6, Text and errors: `u6-text-and-errors.js` (`py-u6`)
+| id | title | concept |
+|---|---|---|
+| `py-string-methods` | Text tools: string methods | changing and checking text with string methods |
+| `py-slicing` | Take a slice | taking parts of strings and lists with slices |
+| `py-errors` | When things go wrong: try and except | handling errors with try and except |
+| `py-word-counter` | Build: a word counter | combining text methods, loops and dictionaries |
+
 ## JavaScript (`content/javascript/`)
 
 ### Unit 1, First steps: `u1-first-steps.js` (`js-u1`)
@@ -91,6 +99,14 @@ taught, and end with a `write` item that puts the whole program together.
 | `js-arrow` | Arrow functions | writing arrow functions | `const add = (a, b) => a + b;`; a body in braces needs `return`; same calls as before |
 | `js-cart` | Build: a shopping cart | combining functions, arrays and objects | Build lesson: functions that loop over an array of objects and return a result |
 
+### Unit 6, Smarter collections: `u6-arrays-and-objects.js` (`js-u6`)
+| id | title | concept |
+|---|---|---|
+| `js-function-values` | Pass a function to a function | passing a function as a value |
+| `js-map-filter` | Transform and pick with map and filter | making new arrays with map and filter |
+| `js-reduce-find` | Find, check and add up | finding items and adding up with find, some, every and reduce |
+| `js-shopping-report` | Build: a shopping report | combining arrays of objects with map, filter and reduce |
+
 ## SQL (`content/sql/`)
 
 All lessons query the camp shop database in `content/sql/db.js`.
@@ -127,6 +143,14 @@ All lessons query the camp shop database in `content/sql/db.js`.
 | `sql-change-data` | Add, change and remove rows | changing data with INSERT, UPDATE and DELETE | `INSERT INTO ... VALUES`; `UPDATE ... SET ... WHERE`; `DELETE FROM ... WHERE`; the danger of forgetting `WHERE` |
 | `sql-create-table` | Make your own table | creating a table with CREATE TABLE | `CREATE TABLE`, column types `INTEGER`, `REAL`, `TEXT`, `PRIMARY KEY`, `NOT NULL`; then insert and query |
 
+### Unit 5, Deeper queries: `u5-deeper-queries.js` (`sql-u5`)
+| id | title | concept |
+|---|---|---|
+| `sql-case` | Label rows with CASE | labeling rows with CASE |
+| `sql-subqueries` | A question inside a question | using a subquery in WHERE |
+| `sql-distinct-union` | Stack lists with UNION | stacking two result lists with UNION |
+| `sql-camp-report` | Build: the camp report | combining joins, grouping, CASE and a subquery |
+
 ## HTML & CSS (`content/web/`)
 
 ### Unit 1, HTML basics: `u1-html.js` (`web-u1`)
@@ -152,3 +176,11 @@ All lessons query the camp shop database in `content/sql/db.js`.
 | `css-flex` | Line things up with flexbox | arranging elements with flexbox | `display: flex` on the parent; `gap`; `justify-content`; `align-items` |
 | `web-forms` | Buttons and inputs | adding buttons and inputs | `<button>`, `<input type="text">`, `<label for>`, `placeholder`; styling a button |
 | `web-profile-card` | Build: a profile card | combining HTML structure and CSS styling | Build lesson: a card with an image, a heading, text and a link, styled with classes, the box model and flexbox |
+
+### Unit 4, Forms and polish: `u4-forms-and-polish.js` (`web-u4`)
+| id | title | concept |
+|---|---|---|
+| `web-form-fields` | Forms and input types | building forms with different input types |
+| `web-css-variables` | Reuse a color with CSS variables | storing a value once with CSS variables |
+| `web-transitions-hover` | Hover effects and transitions | changing styles on hover with a transition |
+| `web-signup-card` | Build: a sign-up card | combining forms, variables and hover effects |

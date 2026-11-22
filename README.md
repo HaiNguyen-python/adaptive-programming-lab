@@ -52,12 +52,18 @@ Settings > Research and data can download:
 - **CSV**: one file of events, one of help decisions (`policy, pk, errors, arms, probs, arm, cost,
   proximal, nextDay, week`), ready for mixed models or off-policy evaluation.
 
+**Backup and restore** (Settings > Backup) saves one learner's name, progress, settings and events to a
+JSON file and restores it as a new learner, on this or another device.
+
+**Offline use**: a service worker (`sw.js`) caches the app and, after first use, the Python and SQL runtimes
+and fonts, so lessons work without a network (on https or localhost).
+
 Exports identify the learner by a random code (for example `L-7KQ2MD`), not by name. They include the
 text learners wrote when explaining hints.
 
 ## Content and its accuracy
 
-68 lessons in 16 units (see `docs/SYLLABUS.md`). Each lesson has teach cards, step-through code
+80 lessons in 20 units (see `docs/SYLLABUS.md`). Each lesson has teach cards, step-through code
 tracing, six kinds of practice (choose, predict the output, fill the gap, put lines in order, find
 the bug, write code), a worked example and a pool of check items for solo and memory checks.
 
@@ -82,6 +88,7 @@ js/engine/                   adaptive engine (no DOM): tutor, mastery, help poli
 js/run/                      code runners: Pyodide worker, JavaScript worker, sql.js, HTML checker
 js/ui/                       screens: learn trail, lesson player, memory, playground, me, settings, welcome
 content/                     courses, one file per unit; content/sql/db.js is the practice database
+sw.js, js/backup.js          offline cache; backup file format
 tools/                       dev server, content verifier and its runners
 tests/                       unit tests
 docs/                        syllabus and content guide

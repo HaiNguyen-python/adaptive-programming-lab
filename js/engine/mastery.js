@@ -87,8 +87,17 @@ export function markLearned(concept, now) {
     concept.due = daysLater(now, INTERVALS[1]);
   }
   concept.best = Math.max(concept.best, 1);
+  // `lastCheck` is when the concept was last learned or checked by a memory check. Practising a lesson
+  // again updates `last` (used for strength) but not `lastCheck`, so memory-check gaps stay correct.
+  if (!concept.lastCheck) concept.lastCheck = now;
   concept.last = now;
 }
+
+/** Days since the concept was learned or last checked (the gap recorded on a memory check). */
+export const checkGapDays = (concept, now) => {
+  const from = concept.lastCheck || concept.last;
+  return from ? daysBetween(from, now) : 0;
+};
 
 /**
  * Apply the result of a memory check (an unaided item on a concept that was due).
@@ -97,7 +106,7 @@ export function markLearned(concept, now) {
  */
 export function applyMemoryCheck(concept, ok, now) {
   const before = concept.stage;
-  const gapDays = concept.last ? daysBetween(concept.last, now) : 0;
+  const gapDays = checkGapDays(concept, now);
   if (ok) {
     concept.stage = Math.min(MAX_STAGE, Math.max(1, before) + 1);
     concept.best = Math.max(concept.best, concept.stage);
@@ -107,6 +116,7 @@ export function applyMemoryCheck(concept, ok, now) {
     concept.due = daysLater(now, 1);
   }
   concept.last = now;
+  concept.lastCheck = now;
   return { before, after: concept.stage, gapDays, nextInDays: daysBetween(now, concept.due) };
 }
 

@@ -1,7 +1,8 @@
 # Using PhD Programming Lab as a research tool
 
 This document is for the researcher. It covers how to run a study with the app, what is recorded, how to
-analyse it, and what the data can and cannot support. Data format version: **2** (`dataVersion` in exports).
+analyse it, and what the data can and cannot support. Data format version: **2** (`dataVersion` in exports). Sections 7 and 8 describe the unit tests and the
+research-question analyses added in app version 1.1.
 
 ## 1. Running a study
 
@@ -19,17 +20,26 @@ analyse it, and what the data can and cannot support. Data format version: **2**
    - `cond`: `random` (default; fair coin from the browser's secure random source, logged with its
      probability 0.5), or `adaptive` / `fixed` to assign the condition yourself (for example from a
      blocked randomisation list; logged as `assignment: given`).
+   - `arms` (optional): the help types the policy may use, set with the teachers, for example
+     `arms=hint,explain`. Unknown names are ignored. Default: all three.
+   - `floor` (optional): the minimum probability of each allowed help type in the adaptive condition,
+     0 to 1/3 (capped). Default 0.2.
+   - A link without a valid `pid` does not enrol anyone: the participant is asked for their personal link.
+   - Someone who already uses the app on that device is offered to join as a **new learner**; their
+     existing progress is kept separately and is never mixed with the study data.
 4. On first start the participant reads the information, ticks the consent box and is enrolled. The
    condition is set and **locked**: the help mode, the allowed help types, the confidence mode, the
    probability floor, the cost weight and the clock testing tool are hidden, and "Add a learner" and
    "Start over" are not offered. The query string is removed from the address bar after enrolment. A
    participant who declines can still use the app, with nothing recorded as a study.
 5. **Collect data**: ask participants to open Settings and press *Download (JSON)* (and optionally the CSV
-   files) and send you the file. Ask for a download at fixed times (for example after the one-week check),
+   files) and send you the file. When the same participant sends several files, the pooling tools use the
+   latest (`exportedAt`) and report the older ones as skipped. Ask for a download at fixed times (for example after the one-week check),
    not only at the end, because browser data can be lost (see Limitations).
 6. **Pool and analyse**:
    `node tools/merge-exports.mjs path/to/exports --out results` writes `participants.csv`,
-   `decisions.csv`, `checks.csv`, `report.md` and `summary.json`.
+   `decisions.csv`, `checks.csv`, `help-seeking.csv`, `episodes.csv`, `unit-tests.csv`, `report.md`,
+   `research-questions.md` and `summary.json` (section 8).
    The same pooling is available in the app: Settings > For researchers and teachers > Researcher
    dashboard (`#/researcher`), which also shows data health for the learner on that device.
 7. **Plan**: `node tools/simulate.mjs --learners 60 --decisions 40 --effect 0.15` shows how the policy
@@ -46,7 +56,8 @@ and `cond`. Names are not exported. What the learner typed when explaining a hin
 
 ### Event log (`events`, CSV `events`)
 
-`t` is the real time in milliseconds since 1970 (UTC). `shift` is present and non-zero when the clock
+`t` is the real time in milliseconds since 1970 (UTC), always set by the logger. When the data carries its
+own app-clock time (help decisions), that is kept as `clockT`. `shift` is present and non-zero when the clock
 testing tool was in use (not possible in a study). `session` links events of one lesson or review.
 
 | type | fields | meaning |
@@ -65,13 +76,19 @@ testing tool was in use (not possible in a study). `session` links events of one
 | `item_result` | itemId, lessonId, kind, role, solo, firstTry, correct, attempts, helps, walkthrough, skipped, conf, ms, xp, memory, pL, stage | the final record of an item |
 | `setting` | name, value | changes to help mode, probability floor, cost weight, confidence mode, allowed help types |
 | `lab_run` | lang, ok, chars | a run in the free playground |
+| `test_skipped` | test, unit, course | the learner skipped a unit's starting check (not possible in a study) |
+
+Unit tests are sessions with `kind: 'test'` (`session_start` also has `test`: `pre`, `post` or `delayed`, and
+`unit`). Their questions are `item_result` rows with `role` `test-pre`, `test-post` or `test-delayed`.
 
 `role` values: `practice` (lesson step, help allowed), `helpcheck` (unaided check right after help),
 `retry`, `final` (unaided check that ends a lesson), `warmup` and `memory` (memory checks), `extra`
-(free practice), `placement`. Solo items (`solo: true`) have one try and no help.
+(free practice), `placement`, and `test-pre`, `test-post`, `test-delayed` (unit tests, section 7). Solo items (`solo: true`) have one try and no help.
 
 `item_result.memory` (memory checks only): `{ before, after, gapDays, nextInDays, stageBefore }`. Stages:
-1 learned, 2 next-day check passed, 3 one-week check passed, then 21, 60 and 120 days.
+1 learned, 2 next-day check passed, 3 one-week check passed, then 21, 60 and 120 days. `gapDays` counts
+from the previous memory check of that concept (or from first learning); practising a lesson again does
+not reset it.
 
 ### Help decisions (`decisions`, CSV `help-decisions`)
 
@@ -123,7 +140,8 @@ the table for durable learning (retention by stage and gap) and calibration (con
 
 1. **Browser storage can be lost.** Clearing site data, private windows or some browser cleanups remove
    progress and the event log. Ask for exports at fixed times; the Settings backup also restores a learner.
-2. **Proximal outcome is not always the check right after the help.** It is the first unaided check of
+2. **Proximal outcome is not always the check right after the help.** (A walkthrough on its own, with no
+   help decision, does not insert a check, so the inserted checks are kept for real help decisions.) It is the first unaided check of
    that lesson in the same session. Normally that is the `helpcheck` inserted right after the item, but
    if the limit of inserted checks was reached it is the `final` check. Filter on `proximalRole`. If the
    learner leaves the session first, it stays `null`.
@@ -168,3 +186,42 @@ simulator with your own assumed effects before fixing the floor and the sample s
 - `#/selftest` runs the lesson checks, including HTML and CSS checks, in the browser with the learner's
   own runtimes.
 - `npm run build:sw` refreshes the offline cache list after files change.
+
+## 7. Unit tests: pre-, post- and delayed post-tests
+
+Paper III describes overall learning with pre-, post- and delayed post-tests. The app gives every unit:
+
+- a **starting check** (`pre`) before the unit's first lesson, offered only while no lesson of the unit is done;
+- a **unit test** (`post`) once every lesson of the unit is done;
+- a **one-week test** (`delayed`), due 7 calendar days after the unit test.
+
+Each test has one question per lesson, from the lesson's pool of five check items. The three tests use three
+different items per lesson; the starting item is rotated by a hash of the learner code and the lesson
+(`testItem` in `js/engine/unit-tests.js`), which counterbalances item difficulty across learners. Questions
+are unaided, confidence is rated before each one, and no feedback on correctness is shown until the end.
+Test answers do not change the memory-check schedule and give the same small XP for right and wrong answers.
+In a study the tests are always on and the starting check cannot be skipped; outside a study learners can
+turn them off in Settings or skip a starting check (`test_skipped`).
+
+Results are saved in the export as `tests` (`unitId -> { pre, post, delayed: { t, right, total, items } }`)
+and pooled into `unit-tests.csv` (one row per learner and unit). `research-questions.md` reports, per
+condition, mean pre, post and one-week scores, the paired gain, the normalised gain (post - pre) / (1 - pre),
+and the share of the post-test level kept after a week.
+
+## 8. Research-question analyses (`tools/research-questions.mjs`)
+
+These are monitoring analyses that check the whole pipeline and give a first look at a pilot. The
+pre-registered analyses belong in a statistics package (mixed models; WCLS for causal excursion effects),
+using the pooled CSV files.
+
+| Research question | Function | Output |
+|---|---|---|
+| RQ1 help-seeking patterns | `helpSeekingFeatures`, `helpSeekingReport` | `help-seeking.csv`: per learner `helpRate`, `rapidShare` (requests less than 8 s after the previous answer), `repeatShare`, `specificShare` (worked examples), `walkthroughRate`, `attemptsBetween`, `priorPerformance` (first-try rate on the first 15 practice items), later `weekRate`, `nextDayRate`, `calibrationBias`, and a rule-based `pattern`. The report gives correlations and outcomes by pattern (H1). |
+| RQ2 types of help | `excursions` | inverse-probability-weighted contrasts between help types on randomised decisions, overall and by prior knowledge (H2a, H2b), for the proximal and the one-week outcome |
+| RQ3 proxy reward | `learningEpisodes`, `proxyReport` | `episodes.csv`: per learner and lesson the short-term signals (immediate task success with help, first-try rate, help requests and their specificity, the unaided check after help, the lesson check, the confidence gap) and the next-day and one-week outcomes. The report ranks the signals by AUC for the one-week check (H3). |
+| RQ4 fair adaptive policy | `policyEvaluation` | doubly robust off-policy values of the fixed tutor and of a learned cost-aware policy (best modelled outcome minus a help cost), overall and for the lowest tertile of prior performance, with 95% cluster-bootstrap intervals (learners resampled, model refit each time) and the non-inferiority check with a margin (default 0.05) (H4a, H4b) |
+| Paper III secondary | `carryOver`, `laterRequests` | proximal pass rate by previous and current help type in a session (lagged effects), and help requests on other items in the next 30 minutes by help type |
+
+The outcome model in the doubly robust estimator is deliberately simple (pass rate by prior knowledge and
+help type, shrunk towards the help type's mean). Because the propensities are logged, the estimate stays
+unbiased even when that model is wrong; the tests check this on simulated data with a known truth.

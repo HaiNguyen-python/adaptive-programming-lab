@@ -33,6 +33,7 @@ export function settingsPage(root) {
   // ---- learning
   page.append(group('Learning',
     row('Daily goal', 'How much XP you aim for each day.', segmented(GOALS.map((g) => ({ value: g.xp, label: `${g.xp} XP` })), s.dailyGoal, (v) => set(() => { s.dailyGoal = Number(v); }), 'Daily goal')),
+    study ? null : row('Unit tests', 'A short starting check before each unit, a test after it and again one week later, so you can see how much you learned and kept.', switchEl(s.unitTests, (v) => { set(() => { s.unitTests = v; }); log('setting', { name: 'unitTests', value: v }); }, 'Unit tests')),
     study ? null : row('Confidence rating', 'Before a question, Kip asks how sure you are. Afterwards you see how well you judged yourself.',
       segmented([{ value: 'checks', label: 'Solo checks' }, { value: 'all', label: 'Every question' }, { value: 'off', label: 'Off' }], s.confidence, (v) => { set(() => { s.confidence = v; }); log('setting', { name: 'confidence', value: v }); }, 'Confidence rating'))));
 

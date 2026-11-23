@@ -3,7 +3,7 @@ import { initStore, store } from './store.js';
 import { loadCatalog } from './catalog.js';
 import { applyLook, onAppChange } from './app.js';
 import { setEffects } from './lib/effects.js';
-import { h } from './lib/dom.js';
+import { h, md } from './lib/dom.js';
 import { iconSvg } from './lib/icons.js';
 import { logoSvg } from './lib/art.js';
 import { APP } from './config.js';
@@ -14,6 +14,7 @@ import { mePage } from './ui/me.js';
 import { settingsPage } from './ui/settings.js';
 import { openWelcome } from './ui/welcome.js';
 import { readStudyParams, setPendingStudy } from './study.js';
+import { confirmSheet, openSheet } from './ui/common.js';
 
 const ROUTES = [
   { id: 'learn', label: 'Learn', icon: 'trail', page: learnPage },
@@ -83,14 +84,44 @@ async function boot() {
   initStore();
   // A study link only enrols someone who has not started yet.
   const study = readStudyParams(location.search);
+  let lateStudy = null;
   if (study && !(store.state && store.state.onboarded)) setPendingStudy(study);
-  else if (study) history.replaceState(null, '', location.pathname + location.hash);
+  else if (study) {
+    history.replaceState(null, '', location.pathname + location.hash);
+    // Someone who already uses the app opened a study link: offer to join as a new learner (never silently).
+    const st = store.state.study;
+    if (!(st && st.id === study.id && st.pid === study.pid)) lateStudy = study;
+  }
   applyLook();
   await loadCatalog();
   window.addEventListener('hashchange', render);
+  // Another tab of the app saved progress for this learner: two tabs would overwrite each other's data.
+  let warned = false;
+  window.addEventListener('storage', (e) => {
+    if (warned || !store.state || e.key !== `hcl.state.${store.state.profile.id}`) return;
+    warned = true;
+    openSheet({
+      title: 'Open in another tab',
+      body: md('This app is also open in another tab or window, and your progress was saved there. Use one tab at a time so nothing gets overwritten. Reload this tab to continue with the latest progress.'),
+      dismissable: false,
+      foot: [h('button.btn.btn--primary', { type: 'button', onclick: () => location.reload() }, 'Reload this tab')],
+    });
+  });
   onAppChange(render);
   window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => applyLook());
   render();
+  if (lateStudy) {
+    const join = await confirmSheet({
+      title: 'A study link',
+      text: `This link is for the research study **${lateStudy.id}**. You already use the app on this device as **${store.state.profile.name}**. To take part, join as a new learner: your current progress stays as it is, and you can switch between learners in Settings.`,
+      yes: 'Join as a new learner',
+      no: 'Not now',
+    });
+    if (join) {
+      setPendingStudy(lateStudy);
+      openWelcome({ onDone: () => { location.hash = '#/learn'; render(); }, onCancel: () => setPendingStudy(null) });
+    }
+  }
 }
 
 // Offline support: only where service workers are allowed (https or localhost).

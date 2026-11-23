@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const DIRS = ['js', 'css', 'content', 'assets'];
-const EXTRA = ['./', 'index.html', 'manifest.webmanifest', 'tools/analysis.mjs'];
+const EXTRA = ['./', 'index.html', 'manifest.webmanifest', 'tools/analysis.mjs', 'tools/research-questions.mjs'];
 
 async function walk(dir) {
   const out = [];

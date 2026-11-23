@@ -15,6 +15,7 @@
  *   memory     a memory check in a review session (next day, one week, then wider)
  *   extra      free practice on a weak idea
  *   placement  a placement question
+ *   test-pre, test-post, test-delayed   unit test questions (js/engine/unit-tests.js)
  *
  * Solo items have no help and one attempt. They are the evidence the mastery model and the help
  * policy learn from, because only unaided performance shows what was learned.
@@ -22,11 +23,12 @@
 import { isItem, isBuildItem } from './content.js';
 import {
   getConcept, updateMastery, guessProb, markLearned, applyMemoryCheck, pickPoolItem,
-  dueConcepts, strength, daysLater, daysBetween, startOfDay,
+  dueConcepts, strength, daysLater, daysBetween, startOfDay, checkGapDays,
 } from './mastery.js';
 import { priorKnowledge, contextKey, availableArms, chooseHelp, updateBandit, HELP_COST } from './help-policy.js';
 import { XP, addXp, checkBadges } from './rewards.js';
 import { calibration } from './calibration.js';
+import { isTestRole, saveTestResult } from './unit-tests.js';
 
 export const MAX_INSERTED = 2;
 export const MAX_SKIPS = 2;
@@ -145,9 +147,20 @@ export function requestHelp({ session, state, lesson, entry, item, now, rng, log
     proximal: null, nextDay: null, week: null,
   };
   state.decisions.push(decision);
-  if (state.decisions.length > 1000) state.decisions.splice(0, state.decisions.length - 1000);
+  // Keep the latest 1000 decisions, but never drop one that is still waiting for its one-week outcome.
+  if (state.decisions.length > 1000) {
+    const extra = state.decisions.length - 1000;
+    let removed = 0;
+    state.decisions = state.decisions.filter((d) => {
+      if (removed >= extra) return true;
+      const open = d.proximal === null || d.nextDay === null || d.week === null;
+      if (open && d.t > now - 60 * 86400000) return true;
+      removed++;
+      return false;
+    });
+  }
   state.counters.helps[choice.arm]++;
-  if (log) log('help_decision', { ...decision });
+  if (log) log('help_decision', { ...decision, session: decision.sessionId });
   return {
     decision,
     hint: choice.arm === 'worked' ? null : entry.item.hints[item.hintsUsed],
@@ -184,15 +197,21 @@ export function recordItem({ session, state, outcome, now, log }) {
 
   if (entry.solo) {
     const stageBefore = concept.stage;
-    const gap = concept.last ? daysBetween(concept.last, now) : 0;
+    const gap = checkGapDays(concept, now);
     const ok = res.firstTry ? 1 : 0;
     const isMemory = entry.role === 'memory' || entry.role === 'warmup';
+    const isTest = isTestRole(entry.role);
     if (entry.role === 'placement') res.xp = 0;
+    else if (isTest) res.xp = XP.checkTried;          // the same for right and wrong: tests give no feedback
     else if (!res.firstTry) res.xp = XP.checkTried;
     else if (isMemory) res.xp = stageBefore >= 2 ? XP.memoryWeek : XP.memoryNextDay;
     else res.xp = XP.soloCheck;
 
-    if (entry.role !== 'placement') {
+    if (isTest) {
+      concept.checks.push({ t: now, ok: res.firstTry, conf: res.conf, role: entry.role, gap, stage: stageBefore, afterHelp: false });
+      if (concept.checks.length > 40) concept.checks.splice(0, concept.checks.length - 40);
+    }
+    if (entry.role !== 'placement' && !isTest) {
       // Proximal outcome: the first unaided check after help, in the same session.
       for (const d of state.decisions) {
         if (d.lessonId === entry.lessonId && d.sessionId === session.id && d.proximal === null) {
@@ -240,10 +259,10 @@ export function recordItem({ session, state, outcome, now, log }) {
   if (session.type === 'lesson' && !entry.solo) {
     const finalAt = session.queue.findIndex((e) => e.role === 'final');
     const limit = finalAt >= 0 ? finalAt : session.queue.length - 1;
-    if (helped && session.inserted < MAX_INSERTED) {
+    if (helps.length && session.inserted < MAX_INSERTED) {
       session.queue.splice(session.pos + 1, 0, checkEntry(entry.lessonId, 'helpcheck'));
       session.inserted++;
-    } else if (!helped && !res.firstTry && res.attempts > 0 && session.inserted < MAX_INSERTED) {
+    } else if (!helps.length && !res.firstTry && res.attempts > 0 && session.inserted < MAX_INSERTED) {
       session.queue.splice(Math.min(session.pos + 3, limit), 0, checkEntry(entry.lessonId, 'retry'));
       session.inserted++;
     }
@@ -280,6 +299,7 @@ function finish({ session, state, now, catalog, log }) {
     addXp(state, out.lessonXp, now);
     session.xp += out.lessonXp;
   }
+  if (session.type === 'test') out.test = saveTestResult(state, session, now);
   out.badges = checkBadges(state, now, catalog || []);
   session.outcome = out;
   if (log) log('session_end', { session: session.id, kind: session.type, xp: session.xp, items: session.results.length, ms: now - session.startedAt });
@@ -309,6 +329,7 @@ function advancePlacement(ctx) {
       concept.best = Math.max(concept.best, 1);
       concept.learned = concept.learned || now;
       concept.last = now;
+      concept.lastCheck = now;
       concept.due = daysLater(now, 7);
       if (!(state.lessons[l.id] && state.lessons[l.id].done)) state.lessons[l.id] = { done: now, runs: 0, testedOut: true };
     }

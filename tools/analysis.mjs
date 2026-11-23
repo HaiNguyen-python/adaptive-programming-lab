@@ -8,6 +8,9 @@
  */
 import { checkRows, toCsv, DECISION_COLUMNS, CHECK_COLUMNS } from '../js/export.js';
 import { calibration, confProb } from '../js/engine/calibration.js';
+import {
+  helpSeekingFeatures, helpSeekingReport, learningEpisodes, proxyReport, excursions, policyEvaluation, carryOver, laterRequests, learningGains,
+} from './research-questions.mjs';
 
 export const ARMS = ['hint', 'explain', 'worked'];
 
@@ -19,10 +22,21 @@ export function pool(exportsList) {
   const participants = [];
   const decisions = [];
   const checks = [];
+  const learners = [];
+  const episodes = [];
+  const tests = [];
   const seen = new Set();
-  for (const ex of exportsList) {
-    if (!ex || !ex.learner || !Array.isArray(ex.decisions)) continue;
-    if (seen.has(ex.learner)) continue; // the same learner exported twice: keep the first file given
+  const duplicates = [];
+  // Several exports of one learner (collected at fixed times): keep the latest, which holds everything the
+  // earlier ones hold plus the later outcomes. Latest = newest exportedAt, then the most events.
+  const ordered = [...exportsList].filter((ex) => ex && ex.learner && Array.isArray(ex.decisions)).sort((a, b) => {
+    const ta = Date.parse(a.exportedAt || '') || 0;
+    const tb = Date.parse(b.exportedAt || '') || 0;
+    if (tb !== ta) return tb - ta;
+    return (Array.isArray(b.events) ? b.events.length : 0) - (Array.isArray(a.events) ? a.events.length : 0);
+  });
+  for (const ex of ordered) {
+    if (seen.has(ex.learner)) { duplicates.push(ex.learner); continue; }
     seen.add(ex.learner);
     const state = { profile: { code: ex.learner }, study: ex.study || null, decisions: ex.decisions };
     const events = Array.isArray(ex.events) ? ex.events : [];
@@ -31,13 +45,37 @@ export function pool(exportsList) {
     const cs = checkRows(state, events).map((r) => ({ ...r, cond: r.cond || cond }));
     decisions.push(...ds);
     checks.push(...cs);
+    learners.push({ ...helpSeekingFeatures(ex.learner, events), cond });
+    episodes.push(...learningEpisodes(ex.learner, events, cond));
+    for (const [unit, r] of Object.entries(ex.tests || {})) {
+      const sc = (x) => (x && x.total ? x.right / x.total : null);
+      tests.push({ learner: ex.learner, cond, unit, pre: sc(r.pre), post: sc(r.post), delayed: sc(r.delayed), preSkipped: r.preSkipped ? 1 : 0 });
+    }
     participants.push({
       learner: ex.learner, study: ex.study ? ex.study.id : '', pid: ex.study ? ex.study.pid : '', cond,
       decisions: ds.length, checks: cs.length, lessonsDone: ex.totals ? ex.totals.lessonsDone : null,
       xp: ex.totals ? ex.totals.xp : null, clockShifted: !!ex.clockShifted, dataVersion: ex.dataVersion || 1,
+      exportedAt: ex.exportedAt || '', eventLog: ex.eventLog || 'ok',
     });
   }
-  return { participants, decisions, checks };
+  return { participants, decisions, checks, learners, episodes, tests, duplicates };
+}
+
+/** All research-question analyses on a pooled dataset (see tools/research-questions.mjs). */
+export function researchQuestions(data, options = {}) {
+  const prior = Object.fromEntries((data.learners || []).map((l) => [l.learner, l.priorPerformance]));
+  return {
+    helpSeeking: helpSeekingReport(data.learners || []),
+    excursions: { proximal: excursions(data.decisions, 'proximal'), week: excursions(data.decisions, 'week') },
+    proxy: proxyReport(data.episodes || [], 'week'),
+    policy: {
+      proximal: policyEvaluation(data.decisions, prior, { ...options, outcome: 'proximal' }),
+      week: policyEvaluation(data.decisions, prior, { ...options, outcome: 'week' }),
+    },
+    learningGains: learningGains(data.tests || []),
+    carryOver: carryOver(data.decisions),
+    laterRequests: laterRequests(data.decisions),
+  };
 }
 
 /**
@@ -84,7 +122,7 @@ export function calibrationOf(checks) {
 }
 
 /** Things that weaken the data and should be looked at before analysis. */
-export function quality({ participants, decisions }) {
+export function quality({ participants, decisions, duplicates = [] }) {
   const shifted = participants.filter((p) => p.clockShifted).map((p) => p.learner);
   const oldFormat = participants.filter((p) => p.dataVersion < 2).map((p) => p.learner);
   const withOutcome = decisions.filter((d) => d.proximal !== null && d.proximal !== undefined && d.proximal !== '');
@@ -94,6 +132,8 @@ export function quality({ participants, decisions }) {
     decisionsWithoutProximal: decisions.length - withOutcome.length,
     proximalNotFromHelpcheck: withOutcome.filter((d) => d.proximalRole && d.proximalRole !== 'helpcheck').length,
     decisionsWithoutPropensities: decisions.filter((d) => !d.probs || !Object.keys(d.probs).length).length,
+    olderExportsSkipped: duplicates.length,
+    participantsWithFallbackEventLog: participants.filter((p) => p.eventLog === 'fallback').map((p) => p.learner),
   };
 }
 
@@ -144,10 +184,18 @@ export function reportMarkdown(summary, data) {
     `- Participants with an older data format (fewer logged fields): ${q.participantsWithOldDataFormat.length ? q.participantsWithOldDataFormat.join(', ') : 'none'}`,
     `- Help decisions without a proximal outcome: ${q.decisionsWithoutProximal}`,
     `- Proximal outcomes that came from a later check than the one right after the help: ${q.proximalNotFromHelpcheck}`,
-    `- Decisions without logged probabilities: ${q.decisionsWithoutPropensities}`, '');
+    `- Decisions without logged probabilities: ${q.decisionsWithoutPropensities}`,
+    `- Older exports of the same participant that were skipped (the latest is used): ${q.olderExportsSkipped}`,
+    `- Participants whose device could not use IndexedDB for some events: ${q.participantsWithFallbackEventLog.length ? q.participantsWithFallbackEventLog.join(', ') : 'none'}`, '');
   return out.join('\n');
 }
 
 export const pooledDecisionsCsv = (data) => toCsv(data.decisions, DECISION_COLUMNS);
 export const pooledChecksCsv = (data) => toCsv(data.checks, CHECK_COLUMNS);
-export const participantsCsv = (data) => toCsv(data.participants, ['learner', 'study', 'pid', 'cond', 'decisions', 'checks', 'lessonsDone', 'xp', 'clockShifted', 'dataVersion']);
+export const LEARNER_COLUMNS = ['learner', 'cond', 'pattern', 'requests', 'practiceItems', 'helpRate', 'rapidShare', 'repeatShare', 'specificShare', 'walkthroughRate', 'attemptsBetween', 'priorPerformance', 'weekRate', 'weekChecks', 'nextDayRate', 'calibrationBias', 'ratedChecks'];
+export const EPISODE_COLUMNS = ['learner', 'cond', 'lessonId', 'immediateSuccess', 'firstTryRate', 'helpRequests', 'helpSpecificity', 'checkAfterHelp', 'lessonCheck', 'confidenceGap', 'nextDay', 'week'];
+export const TEST_COLUMNS = ['learner', 'cond', 'unit', 'pre', 'post', 'delayed', 'preSkipped'];
+export const testsCsv = (data) => toCsv(data.tests || [], TEST_COLUMNS);
+export const learnersCsv = (data) => toCsv(data.learners || [], LEARNER_COLUMNS);
+export const episodesCsv = (data) => toCsv(data.episodes || [], EPISODE_COLUMNS);
+export const participantsCsv = (data) => toCsv(data.participants, ['learner', 'study', 'pid', 'cond', 'decisions', 'checks', 'lessonsDone', 'xp', 'clockShifted', 'dataVersion', 'exportedAt', 'eventLog']);

@@ -71,15 +71,22 @@ function poolPanel() {
     const data = A.pool(parsed);
     if (!data.participants.length) { out.replaceChildren(h('p.small', 'No usable exports found. Use the "Download (JSON)" files from Settings.')); return; }
     const summary = A.summarise(data);
-    last = { data, A, md: A.reportMarkdown(summary, data) };
+    const RQ = await import('../../tools/research-questions.mjs');
+    const rqMd = RQ.researchQuestionsMarkdown(A.researchQuestions(data, { boot: 200 }));
+    last = { data, A, md: A.reportMarkdown(summary, data), rqMd };
     out.replaceChildren(
       h('p.small', `Read ${parsed.length} of ${files.length} files: ${data.participants.length} participants, ${data.decisions.length} decisions, ${data.checks.length} unaided checks.${skipped.length ? ` Could not read: ${skipped.join(', ')}.` : ''}`),
       h('pre.pool-report', last.md),
+      h('pre.pool-report', last.rqMd),
       h('div.row-wrap',
         h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => download('participants.csv', A.participantsCsv(data), 'text/csv') }, 'participants.csv'),
         h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => setTimeout(() => download('decisions.csv', A.pooledDecisionsCsv(data), 'text/csv'), 0) }, 'decisions.csv'),
         h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => download('checks.csv', A.pooledChecksCsv(data), 'text/csv') }, 'checks.csv'),
-        h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => { download('report.md', last.md, 'text/markdown'); toast('Report downloaded.', 'download'); } }, 'report.md')));
+        h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => download('help-seeking.csv', A.learnersCsv(data), 'text/csv') }, 'help-seeking.csv'),
+        h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => download('episodes.csv', A.episodesCsv(data), 'text/csv') }, 'episodes.csv'),
+        h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => download('unit-tests.csv', A.testsCsv(data), 'text/csv') }, 'unit-tests.csv'),
+        h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => { download('report.md', last.md, 'text/markdown'); toast('Report downloaded.', 'download'); } }, 'report.md'),
+        h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => { download('research-questions.md', last.rqMd, 'text/markdown'); toast('Report downloaded.', 'download'); } }, 'research-questions.md')));
   });
   return h('div.card.stack',
     h('h3', 'Pool several participants'),

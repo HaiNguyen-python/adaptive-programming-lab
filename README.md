@@ -38,6 +38,8 @@ public CDNs the first time they are needed (addresses in `js/config.js`).
 | Expertise reversal (H2b) | Priors favour worked examples at low prior knowledge and hints at high prior knowledge; the bandit then learns per learner. |
 | Fairness / not worse than the fixed tutor | A "same order every time" mode is the fixed guardrail tutor (hint, more specific hint, worked example). In adaptive mode every help type stays reachable. |
 | Transparency (EU AI Act) | Each help window explains, in plain words, why that kind of help was chosen and shows the probabilities. Learners can switch help types on or off. |
+| Overall learning (Paper III pre-, post- and delayed tests) | Every unit has a **starting check** before its first lesson, a **unit test** after its last lesson and a **one-week test** a week later: one unaided question per lesson, three different counterbalanced items, confidence rated, no feedback until the end. Me shows before / after / one week per unit. |
+| Teacher-set bounds (human in the loop) | Study links can set the help types the policy may use and the minimum probability (`arms=hint,explain&floor=0.25`); they are logged and locked. |
 | Durable learning over speed | Fast track skips easier items only after three clean first-try answers; misses bring the idea back as a solo check a few items later. |
 
 Settings has a **testing tool that moves the clock** forward a day or a week, so memory checks can be
@@ -48,8 +50,11 @@ tried without waiting.
 Study links (`?study=CODE&pid=P01&cond=random`) enrol a participant with consent, assign the help condition
 at random (or as given) and lock the settings that define it. Every help decision logs its probabilities,
 posterior beliefs and random draw; every outcome (next solo check, next day, one week) is logged as its own
-event. `node tools/merge-exports.mjs <folder>` pools participants' exports into analysis-ready CSV files and a
-descriptive report, and `node tools/simulate.mjs` simulates the help policy for planning. Settings has a
+event. `node tools/merge-exports.mjs <folder>` pools participants' exports into analysis-ready CSV files, a
+descriptive report and a **research-questions report**: help-seeking patterns against one-week results (RQ1),
+causal contrasts between help types by prior knowledge (RQ2), which short-term signal best predicts the
+one-week check (RQ3), doubly robust off-policy values of the fixed tutor and a learned policy with a fairness
+check for the lowest tertile (RQ4), learning gains from the unit tests, carry-over and later help requests, and `node tools/simulate.mjs` simulates the help policy for planning. Settings has a
 **researcher dashboard** (`#/researcher`, hidden for enrolled participants) that shows data health and help
 decisions and pools several participants' exports in the browser. Read `docs/RESEARCH_DATA.md` first: it has
 the study workflow, the data dictionary and the known limitations. `docs/PARTICIPANT_GUIDE.md` and

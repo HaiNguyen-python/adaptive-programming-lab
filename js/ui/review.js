@@ -8,7 +8,8 @@ import { dueConcepts, daysBetween, flames } from '../engine/mastery.js';
 import { startPractice } from '../engine/tutor.js';
 import { flamesEl } from './common.js';
 import { openPlayer } from './player.js';
-import { launchReview } from './learn.js';
+import { launchReview, launchTest, testsOn } from './learn.js';
+import { dueDelayedTests } from '../engine/unit-tests.js';
 
 export function reviewPage(root) {
   const state = store.state;
@@ -21,6 +22,13 @@ export function reviewPage(root) {
     .map((id) => ({ id, days: daysBetween(t, state.concepts[id].due) }))
     .sort((a, b) => a.days - b.days);
   const page = h('div.page', h('div.page-head', h('h1', 'Memory checks')));
+  if (testsOn(state)) {
+    for (const { course, unit } of dueDelayedTests(state, catalog.courses(), t)) {
+      page.append(h('div.card.memory-card', { style: { marginBottom: '14px' } }, svgEl(lanternSvg(true)),
+        h('div.grow', h('h3', `One-week unit test: ${unit.title}`), h('div.small.muted', `${course.title}. One question per lesson, no help. It shows what stayed with you.`)),
+        h('button.btn.btn--primary', { type: 'button', onclick: () => launchTest(course, unit, 'delayed') }, 'Start')));
+    }
+  }
 
   if (due.length) {
     page.append(h('div.card.memory-card', svgEl(lanternSvg(true)),

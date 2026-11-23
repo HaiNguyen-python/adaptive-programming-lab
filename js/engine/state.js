@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS = {
   confidence: 'checks',     // checks | all | off
   floor: 0.2,               // minimum probability of each kind of help (adaptive mode)
   costWeight: 0.05,         // how much the cost of more specific help counts against it
+  unitTests: true,          // offer a pre-test before each unit and a post-test after it (always on in a study)
 };
 
 /** A short, random code that identifies the learner in exported data without using a name. */
@@ -42,6 +43,7 @@ export function newState(profile) {
     counters: { items: 0, firstTry: 0, comeback: 0, explains: 0, runs: 0, nudges: 0, helps: { hint: 0, explain: 0, worked: 0, walkthrough: 0 } },
     badges: {},
     placement: {},
+    tests: {},               // unitId -> { pre, post, delayed: { t, right, total, items }, preSkipped }
     recentItems: [],
   };
 }
@@ -54,7 +56,7 @@ export function repairState(state) {
   out.settings.allow = { ...fresh.settings.allow, ...((state.settings && state.settings.allow) || {}) };
   out.counters = { ...fresh.counters, ...(state.counters || {}) };
   out.counters.helps = { ...fresh.counters.helps, ...((state.counters && state.counters.helps) || {}) };
-  for (const key of ['days', 'lessons', 'concepts', 'bandit', 'badges', 'placement']) {
+  for (const key of ['days', 'lessons', 'concepts', 'bandit', 'badges', 'placement', 'tests']) {
     if (!out[key] || typeof out[key] !== 'object') out[key] = {};
   }
   if (!Array.isArray(out.decisions)) out.decisions = [];

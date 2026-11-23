@@ -16,6 +16,7 @@ import { helpOutcomes, HELP_NAME, ARMS } from '../engine/help-policy.js';
 import { dayKey, daysLater, daysBetween, flames, strength, isDue } from '../engine/mastery.js';
 import { courseProgress, isDone } from '../engine/tutor.js';
 import { bar, flamesEl } from './common.js';
+import { learningGain } from '../engine/unit-tests.js';
 
 const pct = (x) => `${Math.round(x * 100)}%`;
 
@@ -67,6 +68,26 @@ function columns({ bars, max, ticks, unit = '', refs = null, goal = null, height
   });
   s += `<line class="axis" x1="${left}" x2="${W - 4}" y1="${top + plotH}" y2="${top + plotH}"/>`;
   return `${s}</svg>`;
+}
+
+/** Pre-test, post-test and one-week test per unit: the overall learning measure of the research design. */
+function testsCard(state) {
+  const pct = (x) => (x === null || x === undefined ? '' : `${Math.round(x * 100)}%`);
+  const rows = [];
+  for (const course of catalog.courses()) {
+    for (const unit of course.units) {
+      const r = state.tests && state.tests[unit.id];
+      if (!r || !(r.pre || r.post || r.delayed)) continue;
+      rows.push({ course, unit, g: learningGain(r) });
+    }
+  }
+  if (!rows.length) return null;
+  const cell = (x) => h('td.is-num', x === null ? '–' : pct(x));
+  return h('div.card.stack.span-2', h('h3', 'Unit tests'),
+    h('div.result-wrap', h('table.result-table',
+      h('thead', h('tr', h('th', 'Unit'), h('th', 'Before'), h('th', 'After'), h('th', 'One week later'))),
+      h('tbody', rows.map(({ course, unit, g }) => h('tr', h('td', { style: { fontFamily: 'var(--font-ui)' } }, `${course.title}: ${unit.title}`), cell(g.pre), cell(g.post), cell(g.delayed)))))),
+    md('Each unit test has one question per lesson, with no help and no feedback until the end. The one-week test shows what really stayed with you.', 'small.muted'));
 }
 
 function lastingCard(state) {
@@ -192,7 +213,7 @@ export function mePage(root) {
         h('div.row-wrap', h('span.tag', `Level ${lv.level}`), h('span.tag', `${state.xp} XP`), h('span.tag', `${lv.to - state.xp} XP to level ${lv.level + 1}`)),
         bar(lv.progress, 'bar--thin'))),
     h('div.stat-row', tile(String(st.count), st.count === 1 ? 'day streak' : 'day streak'), tile(String(lessons), lessons === 1 ? 'lesson done' : 'lessons done'), tile(String(lasting), 'ideas kept for a week'), tile(String(state.counters.firstTry), 'right first try, no help')),
-    h('div.insight-grid', lastingCard(state), calibrationCard(state), helpCard(state), activityCard(state),
+    h('div.insight-grid', lastingCard(state), calibrationCard(state), helpCard(state), activityCard(state), testsCard(state),
       ...catalog.courses().map((c) => skillsCard(state, c)).filter(Boolean),
       h('div.card.stack.span-2', h('div.row', h('h3.grow', 'Badges'), h('span.small.muted', `${earned} of ${BADGES.length}`)),
         h('div.badge-grid', BADGES.map((b) => h(`div.badge${state.badges[b.id] ? '.is-earned' : ''}`, { html: medalSvg(b.icon) }, h('b', b.name), h('span', b.how)))))));

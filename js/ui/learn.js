@@ -11,6 +11,7 @@ import { dueConcepts, flames, isDue, daysBetween, strength } from '../engine/mas
 import { levelInfo, streak, xpToday } from '../engine/rewards.js';
 import { openSheet, flamesEl, ringEl, bar } from './common.js';
 import { openPlayer } from './player.js';
+import { testStatus, startUnitTest, skipPreTest, dueDelayedTests } from '../engine/unit-tests.js';
 
 const ROW = 132;
 const TOP = 54;
@@ -20,10 +21,41 @@ export function currentCourse() {
   return catalog.getCourse(state.course) || catalog.courses()[0] || null;
 }
 
-export function launchLesson(course, lesson) {
+/** Unit tests are offered when the learner turned them on, and always in a study. */
+export const testsOn = (state) => !!(state.study || state.settings.unitTests);
+
+export function launchTest(course, unit, kind, after) {
+  const session = startUnitTest({ state: store.state, course, unit, kind, now: now(), log });
+  save();
+  openPlayer({ session, course, onClose: (s) => { if (after && s.done) after(); } });
+}
+
+function startNow(course, lesson) {
   const session = startLesson({ state: store.state, course, lesson, now: now(), log });
   save();
   openPlayer({ session, course });
+}
+
+/** Start a lesson. Before the first lesson of a unit, offer the starting check (the unit's pre-test). */
+export function launchLesson(course, lesson) {
+  const state = store.state;
+  const unit = course.units.find((u) => u.id === lesson.unitId);
+  if (!unit || !testsOn(state) || testStatus(state, unit, now()).next !== 'pre') { startNow(course, lesson); return; }
+  const n = unit.lessons.filter((l) => l.pool.length).length;
+  const foot = [h('button.btn.btn--primary', { type: 'button', onclick: () => { sheet.close(); launchTest(course, unit, 'pre', () => startNow(course, lesson)); } }, 'Take the check')];
+  if (!state.study) {
+    foot.unshift(h('button.btn.btn--ghost', { type: 'button', onclick: () => {
+      skipPreTest(state, unit, now());
+      log('test_skipped', { test: 'pre', unit: unit.id, course: course.id });
+      save(); sheet.close(); startNow(course, lesson);
+    } }, 'Skip'));
+  }
+  const sheet = openSheet({
+    title: 'First, a quick starting check',
+    body: h('div.stack', h('div.help-kind', kip('think', state.profile.color), h('div', h('h3', unit.title), h('div.small.muted', `${plural(n, 'question')}, one try each, no help`))),
+      md('Answer what you can, and it is fine to guess or get things wrong: you have not learned this yet. After the unit you take a similar test, so you can see how much you learned. You see your score at the end.')),
+    foot,
+  });
 }
 
 export function launchReview() {
@@ -177,9 +209,16 @@ function campBlock(course, unit, unitIndex, firstIndex, width, openId) {
       status === 'done' ? flamesEl(flames(concept)) : null);
   });
   const doneCount = unit.lessons.filter((l) => isDone(state, l.id)).length;
+  let testBtn = null;
+  if (testsOn(state)) {
+    const ts = testStatus(state, unit, now());
+    if (ts.next === 'post') testBtn = h('button.btn.btn--primary.btn--sm', { type: 'button', html: iconSvg('award'), onclick: () => launchTest(course, unit, 'post') }, 'Unit test');
+    else if (ts.next === 'delayed' && ts.due) testBtn = h('button.btn.btn--primary.btn--sm', { type: 'button', html: iconSvg('award'), onclick: () => launchTest(course, unit, 'delayed') }, 'One-week test');
+    else if (ts.next === 'delayed') testBtn = h('span.tag', { title: 'The unit test comes back one week after you took it' }, `One-week test ${relDay(daysBetween(now(), ts.dueAt))}`);
+  }
   return h('section.camp', { 'aria-label': `Unit ${unitIndex + 1}: ${unit.title}` },
     h('div.camp-head', svgEl(campSvg(doneCount > 0)),
-      h('div.grow', h('div.camp-num', `Unit ${unitIndex + 1}`), h('h2', unit.title), h('div.small.muted', unit.blurb)),
+      h('div.grow', h('div.camp-num', `Unit ${unitIndex + 1}`), h('h2', unit.title), h('div.small.muted', unit.blurb), testBtn ? h('div', { style: { marginTop: '8px' } }, testBtn) : null),
       h('div.camp-count', `${doneCount}/${n}`)),
     h('div.camp-path', { style: { '--h': `${height}px` }, html: svg }, trees, nodes));
 }
@@ -242,6 +281,9 @@ export function learnPage(root) {
       h('span.pill.pill--xp', { title: `Level ${lv.level}`, html: iconSvg('bolt') }, h('span', String(state.xp)), h('span.sr', ' XP'))),
     todayCard(course),
     due ? memoryCard(due) : null,
+    ...(testsOn(state) ? dueDelayedTests(state, catalog.courses(), now()).map(({ course: c, unit }) => h('div.card.memory-card', svgEl(lanternSvg(true)),
+      h('div.grow', h('h3', `One-week test: ${unit.title}`), h('div.small.muted', 'A week has passed since your unit test. What stayed with you?')),
+      h('button.btn.btn--primary.btn--sm', { type: 'button', onclick: () => launchTest(c, unit, 'delayed') }, 'Start'))) : []),
     h('div.only-narrow.stack', statCards(course)),
     trail);
   page.append(h('div.learn-grid', main, h('aside.aside-cards.only-wide', { 'aria-label': 'Your progress' }, statCards(course),

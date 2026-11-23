@@ -26,14 +26,33 @@ export function openWelcome({ onDone, onCancel }) {
   let step = 0;
   const root = h('div.welcome', { role: 'dialog', 'aria-modal': 'true', 'aria-label': `Welcome to ${APP.name}` });
   document.body.append(root);
+  const appEl = document.getElementById('app');
+  if (appEl) appEl.inert = true;
+  const closeRoot = () => { root.remove(); if (appEl) appEl.inert = false; };
 
   const choice = (on, onclick, title, sub, left) => h(`button.choice${on ? '.is-on' : ''}`, { type: 'button', 'aria-pressed': on ? 'true' : 'false', onclick },
     left || null, h('span.grow', h('b', title), sub ? h('span.sub', sub) : null));
+
+  /** Declining (or a link without a participant code) clears the study completely, also for later learners. */
+  function declineStudy() {
+    data.study = null;
+    data.agreed = false;
+    step = 1;
+    setPendingStudy(null);
+    if (location.search) history.replaceState(null, '', location.pathname + location.hash);
+  }
 
   function body() {
     const which = stepNames()[step];
     if (which === 'consent') {
       const s = data.study;
+      if (!s.pid) {
+        // Without a participant code the data could not be linked to the participant, so nobody is enrolled.
+        return h('div.welcome-body',
+          h('h2', STUDY_INFO.title),
+          md(`This link is for the study **${s.id}**, but it has no participant code, so you cannot be enrolled with it. Ask the researcher for your personal link, or use the app without taking part.`),
+          h('button.btn.btn--ghost', { type: 'button', onclick: () => { declineStudy(); render(); } }, 'Use the app without taking part'));
+      }
       const box = h('input', { type: 'checkbox', id: 'consent-box', checked: data.agreed, onchange: () => { data.agreed = box.checked; render(); } });
       return h('div.welcome-body',
         h('h2', STUDY_INFO.title),
@@ -44,7 +63,7 @@ export function openWelcome({ onDone, onCancel }) {
         STUDY_INFO.contact ? md(`**Contact:** ${STUDY_INFO.contact}`) : null,
         STUDY_INFO.ethics ? md(STUDY_INFO.ethics, 'small.muted') : null,
         h('label.row', { for: 'consent-box', style: { gap: '10px', alignItems: 'flex-start' } }, box, h('span', 'I have read this and I agree to take part.')),
-        h('button.btn.btn--quiet', { type: 'button', onclick: () => { data.study = null; data.agreed = false; step = 1; render(); } }, 'No thanks, I only want to use the app'));
+        h('button.btn.btn--quiet', { type: 'button', onclick: () => { declineStudy(); render(); } }, 'No thanks, I only want to use the app'));
     }
     if (which === 'hero') {
       const names = list.map((c) => c.title);
@@ -109,19 +128,19 @@ export function openWelcome({ onDone, onCancel }) {
     save();
     applyLook();
     if (study) {
-      log('study_enrolled', { study: study.id, pid: study.pid, cond: study.cond, assignment: study.assignment, pAssign: study.pAssign, requested: study.requested, consentVersion: study.consentVersion });
+      log('study_enrolled', { study: study.id, pid: study.pid, cond: study.cond, assignment: study.assignment, pAssign: study.pAssign, requested: study.requested, consentVersion: study.consentVersion, arms: study.arms, floor: study.floor });
       setPendingStudy(null);
       if (location.search) history.replaceState(null, '', location.pathname + location.hash);
     }
     log('onboarded', { course: data.course, knows: data.knows, goal: data.goal, helpMode: state.settings.helpMode, tzOffsetMin: new Date().getTimezoneOffset(), dataVersion: DATA_VERSION });
-    root.remove();
+    closeRoot();
     onDone({ placement: data.knows });
   }
 
   function go(d) {
-    if (d > 0 && stepNames()[step] === 'consent' && !data.agreed) return;
+    if (d > 0 && stepNames()[step] === 'consent' && (!data.agreed || !data.study.pid)) return;
     if (d > 0 && step === last()) { finish(); return; }
-    if (d < 0 && step === 0) { if (onCancel) { root.remove(); onCancel(); } return; }
+    if (d < 0 && step === 0) { if (onCancel) { closeRoot(); onCancel(); } return; }
     step += d;
     render();
   }
@@ -129,7 +148,7 @@ export function openWelcome({ onDone, onCancel }) {
   function render() {
     const back = step > 0 || onCancel ? h('button.btn.btn--ghost', { type: 'button', onclick: () => go(-1) }, step === 0 ? 'Cancel' : 'Back') : null;
     const nextLabel = step === 0 ? 'Get started' : step === last() ? 'Start learning' : 'Continue';
-    const nextBtn = h('button.btn.btn--primary.btn--lg', { type: 'button', style: { flex: '1' }, disabled: stepNames()[step] === 'consent' && !data.agreed, onclick: () => go(1) }, nextLabel);
+    const nextBtn = h('button.btn.btn--primary.btn--lg', { type: 'button', style: { flex: '1' }, disabled: stepNames()[step] === 'consent' && (!data.agreed || !data.study.pid), onclick: () => go(1) }, nextLabel);
     root.replaceChildren(h('div.welcome-in',
       h('div.welcome-dots', { 'aria-hidden': 'true' }, Array.from({ length: last() + 1 }, (_, i) => h(`i${i <= step ? '.is-on' : ''}`))),
       body(),

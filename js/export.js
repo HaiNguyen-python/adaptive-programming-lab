@@ -24,7 +24,7 @@ export function who(state) {
 }
 
 /** Everything recorded for this learner, as one JSON document. The learner's name is not included. */
-export function buildJson(state, events, now = new Date()) {
+export function buildJson(state, events, now = new Date(), { eventLog = 'ok' } = {}) {
   const rows = events.map(({ p, ...rest }) => rest);
   return {
     app: APP.name,
@@ -36,8 +36,12 @@ export function buildJson(state, events, now = new Date()) {
     about: 'Recorded on the learner\'s own device and exported by the learner. The learner is identified by a random code, not by name. Times are milliseconds since 1970-01-01 UTC. See docs/RESEARCH_DATA.md.',
     policy: { version: POLICY_VERSION, mode: state.settings.helpMode, floor: state.settings.floor, costWeight: state.settings.costWeight, allow: state.settings.allow, confidence: state.settings.confidence },
     clockShifted: rows.some((e) => e.shift) || state.decisions.some((d) => d.shift),
+    // 'fallback' means IndexedDB was not available for some events on this device (they were kept in local
+    // storage). The events are still included, but check the device's storage settings.
+    eventLog,
     totals: { xp: state.xp, lessonsDone: Object.values(state.lessons).filter((l) => l.done).length, counters: state.counters },
     lessons: state.lessons,
+    tests: state.tests || {},
     concepts: state.concepts,
     decisions: state.decisions,
     bandit: state.bandit,
@@ -47,7 +51,7 @@ export function buildJson(state, events, now = new Date()) {
 
 export const EVENT_COLUMNS = ['learner', 'study', 'pid', 'cond', 'time', 't', 'type', 'session', 'kind', 'lesson', 'lessonId', 'itemId', 'role', 'solo', 'attempt', 'firstTry', 'correct', 'attempts', 'helps', 'walkthrough', 'skipped', 'conf', 'ms', 'xp', 'pL', 'stage', 'arm', 'policy', 'pk', 'errors', 'probs', 'chars', 'shift', 'detail'];
 
-export const DECISION_COLUMNS = ['learner', 'study', 'pid', 'cond', 'time', 't', 'id', 'sessionId', 'lessonId', 'itemId', 'policy', 'pk', 'errors', 'helpsBefore', 'pL', 'arms', 'probs', 'posterior', 'u', 'floor', 'costWeight', 'arm', 'cost', 'proximal', 'proximalRole', 'proximalItemId', 'nextDay', 'nextDayGap', 'week', 'weekGap', 'shift'];
+export const DECISION_COLUMNS = ['learner', 'study', 'pid', 'cond', 'time', 't', 'id', 'sessionId', 'lessonId', 'itemId', 'policy', 'pk', 'errors', 'helpsBefore', 'pL', 'arms', 'probs', 'posterior', 'u', 'floor', 'costWeight', 'allow', 'arm', 'cost', 'proximal', 'proximalRole', 'proximalItemId', 'proximalAt', 'nextDay', 'nextDayGap', 'week', 'weekGap', 'shift'];
 
 export const CHECK_COLUMNS = ['learner', 'study', 'pid', 'cond', 'time', 't', 'session', 'lessonId', 'itemId', 'kind', 'role', 'conf', 'correct', 'attempts', 'ms', 'pL', 'stageBefore', 'stageAfter', 'gapDays', 'afterHelp', 'shift'];
 

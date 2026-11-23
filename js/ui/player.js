@@ -20,6 +20,7 @@ import { availableArms, helpSeekingFlags, explainChoice, HELP_NAME } from '../en
 import { CONF_LEVELS, checkFeedback } from '../engine/calibration.js';
 import { getConcept, flames } from '../engine/mastery.js';
 import { warmUp } from '../run/runners.js';
+import { isTestRole, learningGain } from '../engine/unit-tests.js';
 import { openSheet, confirmSheet, toast, codeBlock, resultTable, previewFrame, flamesEl } from './common.js';
 import { teachView, traceView, itemView } from './items.js';
 
@@ -32,6 +33,9 @@ const ROLE = {
   extra: { tag: 'Practice', title: 'Quick practice' },
   practice: { tag: 'Question', title: 'Next question' },
   placement: { tag: 'Placement check', title: '' },
+  'test-pre': { tag: 'Starting check', title: 'What do you know already?' },
+  'test-post': { tag: 'Unit test', title: 'Show what you learned' },
+  'test-delayed': { tag: 'One-week unit test', title: 'What stayed with you?' },
 };
 const pickOf = (list) => list[Math.floor(Math.random() * list.length)];
 
@@ -98,6 +102,9 @@ export function openPlayer({ session, course, onClose }) {
   }
   document.addEventListener('keydown', onKey);
   document.body.append(root);
+  // The app behind the player cannot be reached with the keyboard or a screen reader while it is open.
+  const appEl = document.getElementById('app');
+  if (appEl) appEl.inert = true;
 
   // ---------------------------------------------------------------- bar
 
@@ -193,6 +200,9 @@ export function openPlayer({ session, course, onClose }) {
 
   function renderItem() {
     const { entry, item } = it;
+    // Response times are measured from the moment the question appears, not from the confidence screen.
+    it.t0 = now();
+    it.lastFeedbackAt = it.t0;
     const itemCourse = catalog.courseOf(entry.lessonId) || course;
     it.view = itemView(item, {
       rng,
@@ -224,7 +234,7 @@ export function openPlayer({ session, course, onClose }) {
     if (it.fails === 0) return { show: true, enabled: false, label: 'Help', note: 'Have a go first. Help opens after your first try.' };
     if (it.lastHelp && it.fails === it.failsAtHelp) return { show: true, enabled: true, label: 'Show the help again', again: 'help' };
     if (arms.length) return { show: true, enabled: true, label: 'Ask Kip for help', calling: it.fails >= 2 && !it.helps.length };
-    if (allow.walkthrough && it.fails - it.failsAtHelp >= 2) return { show: true, enabled: true, label: 'Walk me through it', walk: true };
+    if (allow.walkthrough && it.fails - Math.max(0, it.failsAtHelp) >= 2) return { show: true, enabled: true, label: 'Walk me through it', walk: true };
     if (allow.walkthrough) return { show: true, enabled: false, label: 'Help', note: 'You have every hint for this one. Try twice more and Kip will walk you through it.' };
     return { show: true, enabled: false, label: 'Help', note: 'You have every hint for this one. Give it another go.' };
   }
@@ -235,14 +245,15 @@ export function openPlayer({ session, course, onClose }) {
     const hs = helpState();
     const left = [];
     if (hs.show) {
-      left.push(h(`button.help-btn${hs.calling ? '.is-calling' : ''}`, { type: 'button', disabled: !hs.enabled, onclick: () => {
+      left.push(h(`button.help-btn${hs.calling ? '.is-calling' : ''}`, { type: 'button', disabled: !hs.enabled || it.busy, onclick: () => {
+        if (it.busy) return;
         if (hs.again === 'walk') showWalkthrough(false);
         else if (hs.again === 'help') showHelp(it.lastHelp, false);
         else if (hs.walk) showWalkthrough(true);
         else askHelp();
       }, html: iconSvg('bulb') }, h('span', hs.label)));
     }
-    if (!entry.solo && isBuildItem(item) && (it.fails >= 4 || it.runtimeDown)) left.push(quiet('Skip for now', skipItem));
+    if (!entry.solo && isBuildItem(item) && (it.fails >= 4 || it.runtimeDown)) left.push(h('button.btn.btn--quiet', { type: 'button', disabled: it.busy, onclick: () => { if (!it.busy) skipItem(); } }, 'Skip for now'));
     if (session.type === 'placement') left.push(quiet('Stop here', () => { stopPlacement(ctx()); save(); show(); }));
     const label = it.busy ? 'Checking…' : item.kind === 'write' ? 'Check my code' : 'Check';
     setBar({
@@ -290,6 +301,7 @@ export function openPlayer({ session, course, onClose }) {
     const { entry, item } = it;
     it.done = true;
     it.solved = correct;
+    if (isTestRole(entry.role)) { resolveTest(correct); return; }
     it.view.finish(correct);
     const r = recordItem({
       session, state, now: now(), log,
@@ -319,6 +331,21 @@ export function openPlayer({ session, course, onClose }) {
     }
     setBar({ feedback: fb, main: primary('Continue', next, { ok: correct }) });
     if (correct) burst(mainBtn);
+    if (mainBtn) mainBtn.focus({ preventScroll: true });
+  }
+
+  /** Test questions give no feedback on correctness, so the test teaches as little as possible. */
+  function resolveTest(correct) {
+    const box = stage.querySelector('.stage');
+    if (box) { box.inert = true; box.style.opacity = '0.75'; }
+    const r = recordItem({
+      session, state, now: now(), log,
+      outcome: { firstTry: it.firstTry === true, correct, attempts: it.attempts, helps: [], walkthrough: false, skipped: false, conf: it.conf, ms: now() - it.t0 },
+    });
+    save();
+    play('tap');
+    const fb = feedbackEl('info', 'Answer saved', r.xp, md('You will see your score at the end of the test.', 'small'));
+    setBar({ feedback: fb, main: primary('Continue', next) });
     if (mainBtn) mainBtn.focus({ preventScroll: true });
   }
 
@@ -512,6 +539,26 @@ export function openPlayer({ session, course, onClose }) {
           md(passed ? 'Then you showed you could do it on your own. That is what help is for.' : 'The solo checks show what is not solid yet. That is useful to know, and tomorrow gives you another go.', 'small'))));
       }
       if (s.skipped) box.append(h('div.note-card', { html: iconSvg('bolt', 'ic') }, h('div', h('h4', 'Fast track'), md(`You answered so well that Kip skipped ${plural(s.skipped, 'easier question')}.`, 'small'))));
+    } else if (session.type === 'test') {
+      const unit = course.units.find((u) => u.id === session.unitId);
+      const r = (state.tests && state.tests[session.unitId]) || {};
+      const g = learningGain(r);
+      const pct = (x) => (x === null ? 'Not yet' : `${Math.round(x * 100)}%`);
+      const title = { pre: 'Starting check done', post: 'Unit test done', delayed: 'One-week test done' }[session.testKind];
+      const lead = {
+        pre: 'Now you know where you start. After the unit, a test like this one shows how far you came.',
+        post: 'Kip will give you one more test like this in a week, to see what stays with you.',
+        delayed: 'This is the real measure of learning: what you can still do a week later, on your own.',
+      }[session.testKind];
+      box.append(
+        kip(s.checks.right >= s.checks.total / 2 ? 'proud' : 'happy', state.profile.color),
+        h('h1', title), h('p.muted', unit ? unit.title : ''),
+        h('div.tiles',
+          tile(pct(g.pre), 'starting check', ''),
+          tile(pct(g.post), 'after the unit', ''),
+          tile(pct(g.delayed), 'one week later', '')),
+        h('div.note-card', { html: iconSvg('chart', 'ic') }, h('div', h('h4', `${s.checks.right} of ${s.checks.total} right this time`), md(lead, 'small'))));
+      if (session.testKind === 'post' && g.gain !== null) box.append(h('div.note-card', { html: iconSvg('trophy', 'ic') }, h('div', h('h4', g.gain > 0 ? `You improved by ${Math.round(g.gain * 100)} points` : 'Same score as at the start'), md(g.gain > 0 ? 'Compared with your starting check for this unit.' : 'Practise the lessons again or use your memory checks: they are made for this.', 'small'))));
     } else if (session.type === 'placement') {
       const passed = session.unitScores.filter((u) => u.passed).length;
       const start = course.units[Math.min(passed, course.units.length - 1)];
@@ -578,6 +625,7 @@ export function openPlayer({ session, course, onClose }) {
     closed = true;
     document.removeEventListener('keydown', onKey);
     root.remove();
+    if (appEl) appEl.inert = false;
     save();
     emitChange();
     if (onClose) onClose(session);

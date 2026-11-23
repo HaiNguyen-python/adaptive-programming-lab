@@ -559,3 +559,13 @@ test('badges for solo work, comebacks, explanations and calibration', () => {
   for (const id of ['on-your-own', 'bounce-back', 'own-words', 'tinkerer', 'still-there', 'built-to-last', 'good-judge']) assert.ok(got.includes(id), id);
   assert.deepEqual(checkBadges(state, T0, [course]), [], 'badges are awarded once');
 });
+
+test('practising a lesson again does not reset the gap recorded on the next memory check', () => {
+  const c = newConcept();
+  markLearned(c, T0);
+  const day2 = daysLater(T0, 1) + 9 * HOUR;
+  applyMemoryCheck(c, true, day2);
+  markLearned(c, daysLater(T0, 7) + HOUR);            // "Practise again" on day 8
+  const r = applyMemoryCheck(c, true, daysLater(T0, 8) + 9 * HOUR);
+  assert.equal(r.gapDays, 7, 'days since the previous check, not since the extra practice');
+});

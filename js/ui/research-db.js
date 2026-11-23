@@ -11,7 +11,8 @@ import { h, md } from '../lib/dom.js';
 import { RESEARCH_DB } from '../config.js';
 import { download } from '../log.js';
 import { toast } from './common.js';
-import { rebuildExports, studyLinks, parseCodes } from '../research-data.js';
+import { rebuildExports, studyLinks, parseCodes, participantStatus, conditionBalance, STATUS_COLUMNS } from '../research-data.js';
+import { toCsv } from '../export.js';
 
 const SESSION_KEY = 'hcl.rdb.session';
 const CODE = /^[A-Za-z0-9_-]{1,40}$/;
@@ -208,11 +209,40 @@ export function researchDbPanel() {
       const raw = h('div.row-wrap',
         h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => download(`${st.id}-all-participants.json`, JSON.stringify(exportsList, null, 1), 'application/json') }, 'All data (JSON)'));
       const report = h('div.stack');
-      out.replaceChildren(raw, report);
+      out.replaceChildren(raw, monitorView(st.id, exportsList), h('h3', 'Reports'), report);
       const { showPooled } = await import('./researcher.js');
       await showPooled(report, exportsList, `${events.length} events. ${partial ? `${partial} participant(s) have sent events but no progress snapshot yet. ` : ''}`);
     } catch (e) {
       out.replaceChildren(h('p.small', `Could not load the data: ${e.message}`));
     }
   }
+}
+
+const pctCell = (x) => (x === null || x === undefined ? '' : `${Math.round(x * 100)}%`);
+
+/** Who is taking part, how far each person got, and whether the conditions stay balanced. */
+export function monitorView(sid, exportsList) {
+  const rows = participantStatus(exportsList, Date.now());
+  const bal = conditionBalance(rows);
+  const flagged = rows.filter((r) => r.flags).length;
+  return h('div.stack.rdb-monitor',
+    h('div.rdb-head', h('h3', 'Participants'),
+      h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => download(`${sid}-participants-status.csv`, toCsv(rows, STATUS_COLUMNS), 'text/csv') }, 'Download as CSV')),
+    h('div.rdb-balance', Object.entries(bal).map(([cond, b]) => h('div.rdb-bal',
+      h('b', cond), h('span', `${b.participants} participant${b.participants === 1 ? '' : 's'}`), h('span', `${b.activeLast3Days} active in the last 3 days`), h('span', `${b.lessonsDone} lessons done`)))),
+    flagged ? h('p.small', `${flagged} participant${flagged === 1 ? ' needs' : 's need'} attention (see the last column).`) : null,
+    h('div', { style: { overflowX: 'auto' } }, h('table.result-table.rdb-status',
+      h('thead', h('tr', ['Code', 'Condition', 'Last active', 'Lessons', 'Help', 'Solo after help', 'Memory checks', 'Pre', 'Post', 'Week', 'Notes', 'Attention'].map((t) => h('th', t)))),
+      h('tbody', rows.map((r) => h(`tr${r.flags ? '.is-flagged' : ''}`,
+        h('td', h('b', r.pid || r.learner)),
+        h('td', r.cond),
+        h('td', r.daysSince === null ? '' : r.daysSince === 0 ? 'today' : `${r.daysSince} d ago`),
+        h('td', String(r.lessonsDone)),
+        h('td', String(r.helpDecisions)),
+        h('td', pctCell(r.soloAfterHelp)),
+        h('td', r.memoryChecks ? `${r.memoryChecks} (${pctCell(r.memoryPassed)})` : '0'),
+        h('td', pctCell(r.preTest)), h('td', pctCell(r.postTest)), h('td', pctCell(r.delayedTest)),
+        h('td', String(r.notesOpened)),
+        h('td.small', r.flags)))))),
+    md('Solo after help: share of help moments followed by a right answer on the next question done alone. Pre, Post, Week: unit test scores over all units taken. Notes: how often the lesson notes were opened.', 'small.muted'));
 }

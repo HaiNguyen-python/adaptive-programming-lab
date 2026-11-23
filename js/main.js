@@ -32,7 +32,7 @@ let welcomeOpen = false;
 
 function routeId() {
   const id = location.hash.replace(/^#\/?/, '').split('/')[0];
-  if (id === 'selftest' || id === 'researcher') return id;
+  if (id === 'selftest' || id === 'researcher' || id === 'method') return id;
   return ROUTES.some((r) => r.id === id) ? id : 'learn';
 }
 
@@ -77,6 +77,7 @@ function render() {
   app.replaceChildren(rail, mainEl);
   if (id === 'selftest') import('./ui/selftest.js').then((m) => m.selftestPage(mainEl));
   else if (id === 'researcher') import('./ui/researcher.js').then((m) => m.researcherPage(mainEl));
+  else if (id === 'method') import('./ui/method.js').then((m) => m.methodPage(mainEl));
   else ROUTES.find((r) => r.id === id).page(mainEl);
   mainEl.scrollTop = scroll;
 }

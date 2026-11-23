@@ -71,3 +71,37 @@ test('rebuildExports turns database rows into exports that the analysis can pool
   const pooled = pool(ex);
   assert.equal(pooled.participants.length, 2);
 });
+
+test('participantStatus summarises activity, help outcomes, memory checks and unit tests', async () => {
+  const { participantStatus, conditionBalance } = await import('../js/research-data.js');
+  const now = Date.parse('2026-11-30T12:00:00Z');
+  const ex = [
+    {
+      learner: 'L-AAAAAA', study: { id: 's', pid: 'P2', cond: 'adaptive' }, totals: { lessonsDone: 3 },
+      decisions: [{ proximal: 1 }, { proximal: 0 }, { proximal: null }],
+      concepts: { a: { checks: [{ role: 'memory', ok: true }, { role: 'helpcheck', ok: true }, { role: 'warmup', ok: false }] } },
+      tests: { u1: { pre: { right: 1, total: 4 }, post: { right: 3, total: 4 } } },
+      events: [{ t: Date.parse('2026-11-30T10:00:00Z'), type: 'attempt' }, { t: Date.parse('2026-11-29T10:00:00Z'), type: 'notes_opened' }],
+    },
+    { learner: 'L-BBBBBB', study: { id: 's', pid: 'P10', cond: 'fixed' }, decisions: [], tests: {}, partial: true, events: [{ t: Date.parse('2026-11-20T10:00:00Z'), type: 'attempt' }] },
+  ];
+  const rows = participantStatus(ex, now);
+  assert.deepEqual(rows.map((r) => r.pid), ['P2', 'P10'], 'sorted by participant code, numbers in order');
+  const a = rows[0];
+  assert.equal(a.lessonsDone, 3);
+  assert.equal(a.helpDecisions, 3);
+  assert.equal(a.soloAfterHelp, 0.5);
+  assert.equal(a.memoryChecks, 2);
+  assert.equal(a.memoryPassed, 0.5);
+  assert.equal(a.preTest, 0.25);
+  assert.equal(a.postTest, 0.75);
+  assert.equal(a.delayedTest, null);
+  assert.equal(a.notesOpened, 1);
+  assert.equal(a.daysSince, 0);
+  assert.equal(a.flags, '');
+  assert.match(rows[1].flags, /no progress snapshot/);
+  assert.match(rows[1].flags, /inactive for 10 days/);
+  const bal = conditionBalance(rows);
+  assert.deepEqual(bal.adaptive, { participants: 1, activeLast3Days: 1, lessonsDone: 3 });
+  assert.equal(bal.fixed.activeLast3Days, 0);
+});

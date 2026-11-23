@@ -3,7 +3,7 @@ export const APP = {
   name: 'Adaptive Programming Lab',
   short: 'Adaptive',
   rest: 'Programming Lab',
-  version: '1.5.0',
+  version: '1.6.0',
   tagline: 'Learn to code. Make it stick.',
   mascot: 'Nova',
 };

@@ -68,3 +68,65 @@ export function parseCodes(text) {
   return [...new Set(out)];
 }
 
+
+const DAY = 86400000;
+const share = (a, b) => (b ? a / b : null);
+
+/**
+ * One status row per participant, for monitoring a running study: activity, progress, help and outcomes.
+ * `exportsList` is what rebuildExports returns (or exported files). `now` is a time in milliseconds.
+ */
+export function participantStatus(exportsList, now = Date.now()) {
+  return exportsList.map((ex) => {
+    const events = Array.isArray(ex.events) ? ex.events : [];
+    const last = events.reduce((m, e) => Math.max(m, e.t || 0), 0) || Date.parse(ex.exportedAt || '') || 0;
+    const ds = Array.isArray(ex.decisions) ? ex.decisions : [];
+    const withOutcome = ds.filter((d) => d.proximal === 0 || d.proximal === 1);
+    const memory = Object.values(ex.concepts || {}).flatMap((c) => (Array.isArray(c.checks) ? c.checks : [])).filter((c) => c.role === 'memory' || c.role === 'warmup');
+    const test = (kind) => {
+      let right = 0;
+      let total = 0;
+      for (const r of Object.values(ex.tests || {})) if (r && r[kind] && r[kind].total) { right += r[kind].right; total += r[kind].total; }
+      return share(right, total);
+    };
+    const lessonsDone = ex.totals && Number.isFinite(ex.totals.lessonsDone) ? ex.totals.lessonsDone : Object.values(ex.lessons || {}).filter((l) => l && l.done).length;
+    const daysSince = last ? Math.floor((now - last) / DAY) : null;
+    const flags = [];
+    if (ex.partial) flags.push('no progress snapshot yet');
+    if (daysSince !== null && daysSince >= 3) flags.push(`inactive for ${daysSince} days`);
+    if (ex.clockShifted) flags.push('clock tool used');
+    return {
+      pid: (ex.study && ex.study.pid) || '',
+      learner: ex.learner,
+      cond: (ex.study && ex.study.cond) || '',
+      lastActive: last ? new Date(last).toISOString() : '',
+      daysSince,
+      events: events.length,
+      lessonsDone,
+      helpDecisions: ds.length,
+      soloAfterHelp: share(withOutcome.filter((d) => d.proximal === 1).length, withOutcome.length),
+      memoryChecks: memory.length,
+      memoryPassed: share(memory.filter((c) => c.ok).length, memory.length),
+      preTest: test('pre'),
+      postTest: test('post'),
+      delayedTest: test('delayed'),
+      notesOpened: events.filter((e) => e.type === 'notes_opened').length,
+      flags: flags.join('; '),
+    };
+  }).sort((a, b) => String(a.pid).localeCompare(String(b.pid), undefined, { numeric: true }));
+}
+
+export const STATUS_COLUMNS = ['pid', 'learner', 'cond', 'lastActive', 'daysSince', 'events', 'lessonsDone', 'helpDecisions', 'soloAfterHelp', 'memoryChecks', 'memoryPassed', 'preTest', 'postTest', 'delayedTest', 'notesOpened', 'flags'];
+
+/** How many participants are in each condition, and how many were active in the last 3 days. */
+export function conditionBalance(rows) {
+  const out = {};
+  for (const r of rows) {
+    const k = r.cond || 'unknown';
+    if (!out[k]) out[k] = { participants: 0, activeLast3Days: 0, lessonsDone: 0 };
+    out[k].participants += 1;
+    if (r.daysSince !== null && r.daysSince < 3) out[k].activeLast3Days += 1;
+    out[k].lessonsDone += r.lessonsDone;
+  }
+  return out;
+}

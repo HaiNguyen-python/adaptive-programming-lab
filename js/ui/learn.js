@@ -12,6 +12,7 @@ import { levelInfo, streak, xpToday } from '../engine/rewards.js';
 import { openSheet, flamesEl, bar, codeBlock, resultTable, previewFrame } from './common.js';
 import { openQuickFire, quickFirePool } from './quickfire.js';
 import { openPlayer } from './player.js';
+import { teachView } from './items.js';
 import { testStatus, startUnitTest, skipPreTest, dueDelayedTests } from '../engine/unit-tests.js';
 
 export function currentCourse() {
@@ -94,12 +95,36 @@ function lessonSheet(course, lesson) {
     const prev = course.lessons[lesson.index - 1];
     body.append(h('div.callout', md(`Finish **${prev.title}** to open this lesson.`)));
   }
+  const foot = status === 'locked'
+    ? [h('button.btn.btn--primary', { type: 'button', onclick: () => sheet.close() }, 'OK')]
+    : [h('button.btn.btn--primary', { type: 'button', onclick: () => { sheet.close(); launchLesson(course, lesson); } }, status === 'done' ? 'Practise again' : 'Start lesson')];
+  if (status === 'done') foot.unshift(h('button.btn.btn--ghost', { type: 'button', onclick: () => { sheet.close(); notesSheet(course, lesson); } }, 'Read the notes'));
+  const sheet = openSheet({ title: lesson.title, body, foot });
+}
+
+/**
+ * The lesson's explanations, to look things up after the lesson. While a memory check for the lesson is due the
+ * notes stay closed, so the check still measures what the learner remembers without help. Every opening is logged.
+ */
+export function notesSheet(course, lesson) {
+  const state = store.state;
+  const concept = state.concepts[lesson.id];
+  const due = isDue(concept, now());
+  log('notes_opened', { lessonId: lesson.id, course: course.id, shown: !due });
+  if (due) {
+    const sheet = openSheet({
+      title: `Notes: ${lesson.title}`,
+      body: h('div.stack', md('A **memory check** for this lesson is ready. Take it first, from memory: that is what makes it stick. The notes open again right after.')),
+      foot: [h('button.btn.btn--ghost', { type: 'button', onclick: () => sheet.close() }, 'Later'), h('button.btn.btn--primary', { type: 'button', onclick: () => { sheet.close(); launchReview(); } }, 'Take the memory check')],
+    });
+    return;
+  }
+  const cards = lesson.steps.filter((st) => st.kind === 'teach').map((st) => h('div.note-block', { 'data-accent': course.accent }, teachView(st, course).el));
   const sheet = openSheet({
-    title: lesson.title,
-    body,
-    foot: status === 'locked'
-      ? [h('button.btn.btn--primary', { type: 'button', onclick: () => sheet.close() }, 'OK')]
-      : [h('button.btn.btn--primary', { type: 'button', onclick: () => { sheet.close(); launchLesson(course, lesson); } }, status === 'done' ? 'Practise again' : 'Start lesson')],
+    title: `Notes: ${lesson.title}`,
+    wide: true,
+    body: h('div.notes', h('div.notes-goals', h('h4', 'In this lesson you learned to'), h('ul.recap-list', lesson.goals.map((g) => h('li', { html: iconSvg('check') }, md(g))))), cards),
+    foot: [h('button.btn.btn--primary', { type: 'button', onclick: () => sheet.close() }, 'Close')],
   });
 }
 
@@ -354,7 +379,8 @@ export function learnPage(root) {
       h('ol',
         h('li', h('b', 'Try first. '), 'Help opens after your first attempt: a hint or a similar example, never the answer.'),
         h('li', h('b', 'Prove it alone. '), 'After help, one question on your own.'),
-        h('li', h('b', 'Keep it. '), 'Nova checks again the next day and one week later.'))))));
+        h('li', h('b', 'Keep it. '), 'Nova checks again the next day and one week later.')),
+      h('a.side-link', { href: '#/method' }, 'Why it works: the research')))));
   root.append(page);
   return { scrollTo: null };
 }

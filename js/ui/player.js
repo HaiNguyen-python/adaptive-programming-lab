@@ -589,6 +589,7 @@ export function openPlayer({ session, course, onClose }) {
           tile(`+${s.xp}`, 'XP earned', 'tile--xp'),
           tile(`${s.practice.clean}/${s.practice.total}`, 'right on the first try'),
           tile(`${s.checks.right}/${s.checks.total}`, s.checks.total === 1 ? 'solo check passed' : 'solo checks passed')),
+        lesson.goals && lesson.goals.length ? h('div.recap', h('h4', 'What you can do now'), h('ul.recap-list', lesson.goals.map((g) => h('li', { html: iconSvg('check') }, md(g))))) : null,
         h('div.note-card', { html: iconSvg('flame', 'ic') }, h('div',
           h('h4', h('span', 'One flame lit '), flamesEl(flames(concept))),
           md('Nova will check this idea again **tomorrow** and **one week later**, without help. Passing those checks lights the other two flames.', 'small'))));

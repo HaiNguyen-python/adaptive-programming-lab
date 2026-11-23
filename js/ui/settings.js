@@ -158,6 +158,7 @@ export function settingsPage(root) {
     h('div.set-row.set-row--col',
       h('div.grow', h('b', `${APP.name} ${APP.version}`), h('span', APP.tagline)),
       md(`The way ${APP.name} teaches follows the doctoral research plan **${RESEARCH.title}** by ${RESEARCH.author} (${RESEARCH.place}): help that keeps the thinking with the learner, unaided checks right after help and one week later, and honest feedback on how well you judge your own knowledge.`, 'small'),
+      h('div', h('a.btn.btn--ghost.btn--sm', { href: '#/method' }, 'How Nova teaches, and why')),
       h('ul.refs',
         h('li', 'Bastani, H., et al. (2025). Generative AI without guardrails can harm learning: Evidence from high school mathematics. PNAS, 122.'),
         h('li', 'Bjork, R. A. (1994). Memory and metamemory considerations in the training of human beings. In Metacognition: Knowing about knowing. MIT Press.'),

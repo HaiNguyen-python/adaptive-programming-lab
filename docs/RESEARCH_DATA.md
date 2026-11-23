@@ -84,6 +84,7 @@ testing tool was in use (not possible in a study). `session` links events of one
 | `ai_explain_feedback` | decision, itemId, model, text | the AI tutor answered what the learner wrote when explaining a hint |
 | `lab_ai_hint` | lang, chars, hadError, model, text | a hint about the learner's own code in the Playground |
 | `test_skipped` | test, unit, course | the learner skipped a unit's starting check (not possible in a study) |
+| `notes_opened` | lessonId, course, shown | the learner opened a lesson's notes after finishing it. `shown: false` means a memory check was due, so the notes stayed closed until it was taken (the unaided check is not contaminated) |
 | `quickfire_start` | course, pool | a Quick fire round started (60 seconds of "what does this print?" from finished lessons; not offered in a study) |
 | `quickfire_round` | course, score, right, total, bestCombo, record, ms | a Quick fire round ended. It never changes mastery or memory checks, so it does not touch the outcome measures |
 
@@ -298,7 +299,10 @@ Supabase dashboard (SQL editor).
 2. **Open a study** with a code (for example `pilot-2027`).
 3. **Links**: enter participant codes (`P01-P30`), choose the condition, and download the links as CSV. Each
    participant gets their own link.
-4. During the study the table shows participants, events and when data last arrived.
+4. During the study the table shows participants, events and when data last arrived. **Analyse** also opens the
+   **participant monitor**: per participant the condition, last activity, lessons done, help moments, pass rate on
+   the question done alone after help, memory checks, unit test scores and notes opened, with flags for
+   participants inactive for 3 days or more; and the balance of the conditions. It downloads as a CSV.
 5. **Analyse** loads everything and shows the monitoring and research-question reports with the same CSV files
    as pooled exports (`decisions.csv`, `checks.csv`, `help-seeking.csv`, `episodes.csv`, `unit-tests.csv`, ...).
    **All data (JSON)** downloads one export per participant, which `node tools/merge-exports.mjs` and

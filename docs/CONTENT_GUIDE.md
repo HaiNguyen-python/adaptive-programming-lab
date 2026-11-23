@@ -1,11 +1,11 @@
-# PhD Programming Lab content guide
+# Adaptive Programming Lab content guide
 
-How to write lessons for PhD Programming Lab. Read this fully before writing. The reference example is
+How to write lessons for Adaptive Programming Lab. Read this fully before writing. The reference example is
 `content/python/u1-first-steps.js`: copy its structure, tone and level of detail.
 
 ## 1. Why lessons look the way they do
 
-PhD Programming Lab follows the research plan "The Cost of Easy Answers" (durable, unaided learning and accurate
+Adaptive Programming Lab follows the research plan "The Cost of Easy Answers" (durable, unaided learning and accurate
 self-assessment in programming education). That shapes every lesson:
 
 - **Attempt first.** Learners try before they get help. Help is never the answer.

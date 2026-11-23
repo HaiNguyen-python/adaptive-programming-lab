@@ -6,6 +6,7 @@
 import { APP } from './config.js';
 import { STATE_VERSION, repairState } from './engine/state.js';
 
+// Kept from the app's first name on purpose, so backups made before the rename can still be restored.
 export const BACKUP_KIND = 'phd-programming-lab-backup';
 
 export function buildBackup(state, events = [], now = new Date()) {

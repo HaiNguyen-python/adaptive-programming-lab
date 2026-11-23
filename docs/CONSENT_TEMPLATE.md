@@ -16,7 +16,7 @@
 **Purpose.** [One or two plain sentences: for example, to learn which kinds of help from a learning app help
 people remember programming a week later, and how well people judge what they know.]
 
-**What you will do.** Use the app PhD Programming Lab for about [time] over [period]. You will do short
+**What you will do.** Use the app Adaptive Programming Lab for about [time] over [period]. You will do short
 lessons, ask for help when you want it, do memory checks the next day and a week later, and sometimes rate
 how sure you are before answering.
 

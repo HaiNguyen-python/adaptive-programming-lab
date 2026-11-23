@@ -1,7 +1,7 @@
 {
-  "name": "phd-programming-lab",
+  "name": "adaptive-programming-lab",
   "version": "1.0.0",
-  "description": "PhD Programming Lab: an adaptive programming learning app (Python, JavaScript, SQL, HTML & CSS) built on research into durable learning.",
+  "description": "Adaptive Programming Lab: an adaptive programming learning app (Python, JavaScript, SQL, HTML & CSS) built on research into durable learning.",
   "type": "module",
   "private": true,
   "scripts": {

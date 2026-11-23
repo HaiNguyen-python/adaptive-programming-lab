@@ -1,4 +1,4 @@
-# Using PhD Programming Lab as a research tool
+# Using Adaptive Programming Lab as a research tool
 
 This document is for the researcher. It covers how to run a study with the app, what is recorded, how to
 analyse it, and what the data can and cannot support. Data format version: **2** (`dataVersion` in exports). Sections 7 and 8 describe the unit tests and the

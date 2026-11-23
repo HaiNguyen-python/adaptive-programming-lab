@@ -7,6 +7,7 @@
 import { buildJson, eventsCsv, decisionsCsv, checksCsv } from './export.js';
 import { buildBackup } from './backup.js';
 
+// Kept from the app's first name on purpose: renaming the database would orphan event logs already on devices.
 const DB_NAME = 'phd-programming-lab';
 const STORE = 'events';
 const PENDING_KEY = 'hcl.events.pending';
@@ -140,7 +141,7 @@ const stamp = () => new Date().toISOString().slice(0, 10);
 /** Everything recorded for this learner, as one JSON file. The learner's name is not included. */
 export async function exportJson(state) {
   const events = await readEvents(state.profile.id);
-  download(`phd-programming-lab-${state.profile.code}-${stamp()}.json`, JSON.stringify(buildJson(state, events, new Date(), { eventLog: eventLogStatus() }), null, 2), 'application/json');
+  download(`adaptive-programming-lab-${state.profile.code}-${stamp()}.json`, JSON.stringify(buildJson(state, events, new Date(), { eventLog: eventLogStatus() }), null, 2), 'application/json');
   return events.length;
 }
 
@@ -148,7 +149,7 @@ export async function exportJson(state) {
 export async function exportBackup(state) {
   const events = await readEvents(state.profile.id);
   const safe = state.profile.name.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'learner';
-  download(`phd-programming-lab-backup-${safe}-${stamp()}.json`, JSON.stringify(buildBackup(state, events)), 'application/json');
+  download(`adaptive-programming-lab-backup-${safe}-${stamp()}.json`, JSON.stringify(buildBackup(state, events)), 'application/json');
   return events.length;
 }
 
@@ -156,8 +157,8 @@ export async function exportBackup(state) {
 export async function exportCsv(state) {
   const events = await readEvents(state.profile.id);
   const code = state.profile.code;
-  download(`phd-programming-lab-${code}-events-${stamp()}.csv`, eventsCsv(state, events), 'text/csv');
-  setTimeout(() => download(`phd-programming-lab-${code}-help-decisions-${stamp()}.csv`, decisionsCsv(state), 'text/csv'), 400);
-  setTimeout(() => download(`phd-programming-lab-${code}-unaided-checks-${stamp()}.csv`, checksCsv(state, events), 'text/csv'), 800);
+  download(`adaptive-programming-lab-${code}-events-${stamp()}.csv`, eventsCsv(state, events), 'text/csv');
+  setTimeout(() => download(`adaptive-programming-lab-${code}-help-decisions-${stamp()}.csv`, decisionsCsv(state), 'text/csv'), 400);
+  setTimeout(() => download(`adaptive-programming-lab-${code}-unaided-checks-${stamp()}.csv`, checksCsv(state, events), 'text/csv'), 800);
   return events.length;
 }

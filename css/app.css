@@ -1,4 +1,4 @@
-/* PhD Programming Lab
+/* Adaptive Programming Lab
    Visual idea, "Source": the code is the picture. The interface is a quiet, precise instrument in cool
    neutrals and ink; colour comes from the four languages and from what the learner does (right, wrong,
    streak). The one bold element on each screen is real code from the lesson, set large in an editor panel.
@@ -804,7 +804,7 @@ svg { display: block; }
   .today { grid-template-columns: auto 1fr; gap: 12px; }
 }
 
-/* two-line wordmark: "PhD" over "Programming Lab" */
+/* two-line wordmark: "Adaptive" over "Programming Lab" */
 .brand svg { flex: none; }
 .brand b { display: block; font-size: 1.02rem; line-height: 1.15; white-space: nowrap; }
 .brand b span { display: block; }

@@ -1,11 +1,11 @@
-# Participant guide: PhD Programming Lab
+# Participant guide: Adaptive Programming Lab
 
 *Template. Replace the text in [square brackets] and print or send it with the study link. Keep the language
 simple: many participants read English as a second language.*
 
 ## What you will do
 
-You will learn a little programming with a small app called **PhD Programming Lab** and its guide, Nova.
+You will learn a little programming with a small app called **Adaptive Programming Lab** and its guide, Nova.
 Lessons are short. Plan for **[about 15 minutes, [N] times a week, for [N] weeks]**.
 
 You will:

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Tiny static file server for PhD Programming Lab. No dependencies.
+ * Tiny static file server for Adaptive Programming Lab. No dependencies.
  *   node tools/serve.mjs          serves the project on http://localhost:8140
  *   PORT=9000 node tools/serve.mjs
  */
@@ -47,5 +47,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`PhD Programming Lab is running at http://localhost:${PORT}`);
+  console.log(`Adaptive Programming Lab is running at http://localhost:${PORT}`);
 });

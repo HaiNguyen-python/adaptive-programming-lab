@@ -1,9 +1,9 @@
 /** App-wide settings. Change the name here and it changes everywhere. */
 export const APP = {
-  name: 'PhD Programming Lab',
-  short: 'PhD',
+  name: 'Adaptive Programming Lab',
+  short: 'Adaptive',
   rest: 'Programming Lab',
-  version: '1.4.0',
+  version: '1.4.1',
   tagline: 'Learn to code. Make it stick.',
   mascot: 'Nova',
 };

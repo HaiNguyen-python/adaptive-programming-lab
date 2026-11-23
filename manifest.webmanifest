@@ -1,6 +1,6 @@
 {
-  "name": "PhD Programming Lab",
-  "short_name": "PhD Lab",
+  "name": "Adaptive Programming Lab",
+  "short_name": "Adaptive Lab",
   "description": "Learn Python, JavaScript, SQL, HTML and CSS in short lessons that adapt to you.",
   "start_url": "./",
   "display": "standalone",

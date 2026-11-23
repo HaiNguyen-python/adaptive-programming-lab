@@ -1,5 +1,5 @@
 /**
- * Drawings made for PhD Programming Lab: Nova's mark, confidence scale, badges and the brand mark.
+ * Drawings made for Adaptive Programming Lab: Nova's mark, confidence scale, badges and the brand mark.
  * Flat geometric shapes in a few solid colours: clear at any size, inline SVG, no image files.
  */
 import { iconSvg } from './icons.js';

@@ -1077,3 +1077,13 @@ kbd { display: inline-grid; place-items: center; min-width: 22px; height: 22px; 
 .showcase pre.code { flex: 1; font-size: 1.12rem; padding: 22px 24px; display: flex; align-items: center; }
 .showcase pre.out { font-size: .95rem; padding: 14px 24px; }
 @media (max-width: 860px) { .showcase pre.code { font-size: 1rem; padding: 18px 18px; min-height: 0; } }
+
+/* research database panel */
+.rdb-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.rdb-signin { display: grid; gap: 10px; max-width: 420px; }
+.rdb-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto; gap: 10px; }
+@media (max-width: 640px) { .rdb-form { grid-template-columns: 1fr; } }
+.rdb-create { display: grid; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+.rdb-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.rdb-table td { vertical-align: middle; }
+textarea.input { padding: 10px 14px; min-height: 0; line-height: 1.5; }

@@ -58,7 +58,9 @@ export function openWelcome({ onDone, onCancel }) {
         h('h2', STUDY_INFO.title),
         md(`This app is used in the study **${s.id}**. Your code is **${s.pid || 'not set'}**. It is used instead of your name.`),
         md('**What is recorded:** your answers, when you ask for help and which kind, the confidence you rate, what you write when you explain a hint, and your results on later memory checks.'),
-        md('**Where it is kept:** only on this device. Nothing is sent anywhere. At the end you may send the file you download in Settings to the researcher.'),
+        s.upload !== false
+          ? md('**Where it goes:** it is saved on this device and sent automatically to the research database of the study (Supabase, in the EU), under your code only. Your name stays on this device. Only the researcher can read the data.')
+          : md('**Where it is kept:** only on this device. Nothing is sent anywhere. At the end you may send the file you download in Settings to the researcher.'),
         md('**Your choice:** taking part is voluntary. You can stop at any time and remove everything in Settings.'),
         STUDY_INFO.contact ? md(`**Contact:** ${STUDY_INFO.contact}`) : null,
         STUDY_INFO.ethics ? md(STUDY_INFO.ethics, 'small.muted') : null,

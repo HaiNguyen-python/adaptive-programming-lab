@@ -12,6 +12,7 @@ import { HELP_NAME, POLICY_VERSION } from '../engine/help-policy.js';
 import { exportJson, exportCsv, exportBackup, addEvents, clearEvents } from '../log.js';
 import { segmented, switchEl, confirmSheet, toast } from './common.js';
 import { openWelcome } from './welcome.js';
+import { syncEnabled, syncNow, syncStatus, onSyncChange, lastSent } from '../sync.js';
 import { AI_MODELS, getKey, setKey, testConnection, aiModel } from '../ai.js';
 
 const row = (title, sub, control) => h('div.set-row', h('div.grow', h('b', title), sub ? h('span', sub) : null), control);
@@ -42,7 +43,8 @@ export function settingsPage(root) {
   if (study) {
     page.append(group('Study',
       h('div.set-row.set-row--col', h('div.grow', h('b', `You are taking part in ${study.id}`),
-        h('span', `Your code is ${study.pid || state.profile.code}. How Nova chooses help, the confidence ratings and the other settings that belong to the study are fixed, so everyone's results can be compared. You can stop at any time: delete this learner below.`)))));
+        h('span', `Your code is ${study.pid || state.profile.code}. How Nova chooses help, the confidence ratings and the other settings that belong to the study are fixed, so everyone's results can be compared. You can stop at any time: delete this learner below.`))),
+      syncEnabled(state) ? syncRow(state) : null));
   }
 
   // ---- help
@@ -215,4 +217,23 @@ function aiGroup(state, study, set) {
     h('div.row-wrap', keyInput, saveKey, removeKey, test), status));
   rows.push(h('div.set-row.set-row--col', h('div.callout.callout--warn', md('**Privacy:** when the AI tutor is on, the task, the current answer of the learner and any explanation they write are sent to Anthropic to write the help. Names are never sent. Tell learners (and parents) before switching it on, and check that your ethics approval covers it in a study.', 'small'))));
   return h('section.set-group', h('h2', 'AI tutor (optional)'), rows);
+}
+
+/** For study participants: whether their data reached the research database. */
+function syncRow(state) {
+  const line = h('span');
+  const paint = () => {
+    const st = syncStatus();
+    const t = st.lastOk || lastSent(state);
+    const when = t ? new Date(t).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : null;
+    line.textContent = st.state === 'sending' ? 'Sending now…'
+      : st.state === 'offline' ? `You are offline. Your data waits on this device and is sent when you are back online.${when ? ` Last sent ${when}.` : ''}`
+        : st.state === 'refused' ? `The research database is not accepting data for ${state.study.id} right now (the study may be closed). Your data stays on this device. Tell the researcher.`
+          : st.state === 'error' ? `Could not send just now. It will try again.${when ? ` Last sent ${when}.` : ''}`
+            : when ? `Your data was last sent ${when}.` : 'Your data is sent automatically while you learn.';
+  };
+  paint();
+  const off = onSyncChange(() => { if (!line.isConnected) { off(); return; } paint(); });
+  return h('div.set-row', h('div.grow', h('b', 'Sending to the research database'), line),
+    h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => syncNow() }, 'Send now'));
 }

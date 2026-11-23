@@ -65,7 +65,10 @@ the study workflow, the data dictionary and the known limitations. `docs/PARTICI
 
 ## Data
 
-Everything is stored on the learner's device (local storage and IndexedDB). Nothing is sent anywhere.
+Everything is stored on the learner's device (local storage and IndexedDB). Outside a study nothing is sent
+anywhere. **In a study**, after consent, the device also sends its data automatically to the research database
+(Supabase, EU), which only the researcher can read; the Researcher dashboard (`#/researcher`) signs in to it,
+opens studies, makes participant links and analyses the data. See `docs/RESEARCH_DATA.md`, section 10.
 Settings > Research and data can download:
 
 - **JSON**: all events, help decisions with outcomes, mastery records and bandit state.

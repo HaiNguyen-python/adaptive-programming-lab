@@ -39,8 +39,11 @@ Your nickname stays on your device. Exported files use a code instead of your na
 
 ## 3. Where the data goes and how long it is kept
 
-- While you use the app, everything is saved **only on your device** (in the browser).
-- Nothing is sent automatically. At [dates] you send the exported file to [researcher/email/upload service].
+- While you use the app, your answers and help requests are saved on your device and **sent automatically**
+  to the study's research database (Supabase, servers in the EU, Stockholm), under your participant code
+  only. Your nickname is never sent. Only the researcher can read the database.
+  [If the study uses `upload=0` links instead: "Everything is saved only on your device. At [dates] you send
+  the exported file to [researcher/email/upload service]."]
 - The researcher stores the files at [location, access, encryption]. Files are kept until [date/event] and
   then deleted [or anonymised and archived at ...].
 - Results will be reported in [thesis, articles] without identifying anyone. [Say whether anonymised data

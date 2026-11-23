@@ -3,8 +3,8 @@
  *   https://example.org/app/?study=AALTO-2026&pid=P014&cond=random
  * and the first start enrols the participant: they read and accept the information, the help condition
  * is assigned (at random, or as given), and the settings that define the condition are locked so the
- * learner cannot change the experiment. Everything is still stored on the learner's device only; the
- * participant sends the exported file to the researcher.
+ * learner cannot change the experiment. With consent, the device then sends its data to the research
+ * database automatically (js/sync.js); with upload=0 it stays on the device and the participant sends the file.
  *
  *   study   study code, 1 to 40 letters, digits, - or _
  *   pid     participant code chosen by the researcher (no names)
@@ -12,6 +12,7 @@
  *   arms    optional teacher-set bounds: the help types the policy may use, for example arms=hint,explain
  *   ai      optional: ai=1 makes Nova's AI tutor part of the condition (the researcher enters the key on the device)
  *   floor   optional minimum probability of each allowed help type in the adaptive condition (0 to 0.33)
+ *   upload  optional: upload=0 keeps the data on the device only (the participant sends the file instead)
  */
 export const CONDITIONS = ['adaptive', 'fixed'];
 export const HELP_TYPES = ['hint', 'explain', 'worked'];
@@ -38,6 +39,7 @@ export function readStudyParams(search) {
     arms: armsRaw.length ? [...new Set(armsRaw)].sort((a, b) => HELP_TYPES.indexOf(a) - HELP_TYPES.indexOf(b)) : null,
     floor: floorNum !== null && Number.isFinite(floorNum) ? Math.max(0, Math.min(1 / 3, floorNum)) : null,
     ai: p.get('ai') === '1',
+    upload: p.get('upload') !== '0',
   };
 }
 
@@ -68,6 +70,8 @@ export function enrol(state, params, { consentAt, consentVersion = STUDY_VERSION
     requested: params.cond, enrolledAt: consentAt, consentAt, consentVersion, version: STUDY_VERSION,
     // Teacher-set bounds (null = the app's defaults). They are applied to the settings and locked.
     arms: params.arms || null, floor: params.floor ?? null, ai: !!params.ai,
+    // Sending to the research database needs consent version 2 or later, which says so.
+    upload: params.upload !== false && consentVersion >= 2,
   };
   state.settings.helpMode = a.cond;
   if (params.arms) for (const t of HELP_TYPES) state.settings.allow[t] = params.arms.includes(t);

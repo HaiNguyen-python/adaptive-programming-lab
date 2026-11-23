@@ -3,7 +3,7 @@ export const APP = {
   name: 'Adaptive Programming Lab',
   short: 'Adaptive',
   rest: 'Programming Lab',
-  version: '1.4.1',
+  version: '1.5.0',
   tagline: 'Learn to code. Make it stick.',
   mascot: 'Nova',
 };
@@ -26,8 +26,18 @@ export const RUNTIME = {
  * Shown to participants who open a study link (see js/study.js). Fill in your own details and make sure the
  * wording matches your ethics approval. If `contact` is empty that line is left out.
  */
+/**
+ * The research database (Supabase, region eu-north-1). The key is a publishable key: with it a participant's
+ * device can only call the two "submit" functions, which add rows to a study the researcher has opened. It
+ * cannot read anything. Reading needs a researcher account (see docs/RESEARCH_DATA.md, section 10).
+ */
+export const RESEARCH_DB = {
+  url: 'https://bvnufhwtwhozcbrpdxdf.supabase.co',
+  key: 'sb_publishable_xojAuZVv_6HS478QzEgvbw_FyZPvmPI',
+};
+
 export const STUDY_INFO = {
-  version: 1,
+  version: 2,  // 2: data is sent to the research database automatically (1: kept on the device only)
   title: 'Taking part in a research study',
   contact: '',   // for example: 'Name, email address'
   ethics: '',    // for example: 'Approved by the university research ethics committee, statement number'

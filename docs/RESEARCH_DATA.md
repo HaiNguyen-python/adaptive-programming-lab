@@ -6,8 +6,9 @@ research-question analyses added in app version 1.1.
 
 ## 1. Running a study
 
-1. **Host the app** on any static web server (for example GitHub Pages). Participants use their own device;
-   there is no server, so nothing is sent anywhere automatically.
+1. **Host the app** on any static web server (for example GitHub Pages). Participants use their own device.
+   Study participants' devices **send their data automatically to the research database** (section 10).
+   Add `upload=0` to a link to keep that participant's data on the device only (they then send the file).
 2. **Prepare documents**: `docs/CONSENT_TEMPLATE.md` (information sheet and consent) and
    `docs/PARTICIPANT_GUIDE.md` are templates to adapt and get approved.
    **Fill in `STUDY_INFO` in `js/config.js`** (contact and ethics statement). The consent page shows this text.
@@ -264,3 +265,55 @@ Nova also explains error messages without any AI: `js/engine/errors.js` gives a 
 common Python, JavaScript and SQL errors (what it means and what to check, never the fixed code). It is shown
 under error output in coding tasks and the Playground, in both conditions. Its patterns are tested against the
 real messages of CPython, Node and SQLite (`tests/errors.test.mjs`).
+
+## 10. The research database (automatic collection)
+
+Study participants' devices send their data to a Supabase project (`adaptive-programming-lab`, region
+eu-north-1, Stockholm; free plan). Address and publishable key: `RESEARCH_DB` in `js/config.js`.
+
+**Who can do what**
+
+| | Participant devices (no account) | Researcher (signed in, listed in `researchers`) |
+|---|---|---|
+| Send data | only through `submit_events` and `submit_snapshot`, only to an **open** study | yes |
+| Read data | no (no table access at all) | everything |
+| Open, close studies | no | yes |
+
+The first account that signs in on the dashboard becomes the researcher (`claim_researcher`). Create yours
+before sharing any study link. To add a colleague later, add their account id to `public.researchers` in the
+Supabase dashboard (SQL editor).
+
+**What is stored**
+
+- `events`: every event of the event log (section 2), one row each: `study_id`, `pid`, `learner`, time, type and
+  the event's fields in `data`. A repeat of the same event is skipped, so sending is safe to retry.
+- `snapshots`: every few minutes, and when the tab is hidden, the same JSON as "Download my data" but without
+  the events (progress, help decisions with probabilities and outcomes, unit tests, concepts, bandit state).
+  The dashboard uses the newest one per learner.
+- Never stored: names, the Claude API key.
+
+**Running a study with it**
+
+1. Researcher dashboard > Research database > sign in (or create the account the first time).
+2. **Open a study** with a code (for example `pilot-2027`).
+3. **Links**: enter participant codes (`P01-P30`), choose the condition, and download the links as CSV. Each
+   participant gets their own link.
+4. During the study the table shows participants, events and when data last arrived.
+5. **Analyse** loads everything and shows the monitoring and research-question reports with the same CSV files
+   as pooled exports (`decisions.csv`, `checks.csv`, `help-seeking.csv`, `episodes.csv`, `unit-tests.csv`, ...).
+   **All data (JSON)** downloads one export per participant, which `node tools/merge-exports.mjs` and
+   `node tools/research-questions.mjs` also read.
+6. **Close** the study when collection ends: devices stop sending; nothing already sent is lost.
+
+**Consent.** Sending needs consent version 2 (`STUDY_INFO.version` in `js/config.js`), whose text says that
+data is sent to the research database. Participants who enrolled under version 1 ("kept on this device") are
+never sent. Adapt `docs/CONSENT_TEMPLATE.md` and check with Aalto's data protection guidance that the storage
+location is acceptable and a data processing agreement is in place.
+
+**Free-plan limits.** 500 MB database (roughly a few hundred participants with full event logs). A free project
+is paused after about a week with no requests at all; while devices send data it stays active. A paused
+project keeps its data and is restored from the Supabase dashboard. Download the data regularly as a backup.
+
+**Abuse.** The publishable key is public by design. Someone who knows an open study code could send fake rows
+for made-up learner codes; they cannot read or change anything. Use study codes that are not easy to guess,
+close studies when collection ends, and check the participant codes against your list when analysing.

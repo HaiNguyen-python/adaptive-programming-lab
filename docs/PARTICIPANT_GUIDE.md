@@ -36,7 +36,11 @@ browser. Your progress is saved in the browser. If it is cleared, it is lost.
 
 ## Sending your data to the researcher
 
-Nothing is sent automatically. At **[dates]**, and at the end:
+Your data is sent to the research database **automatically** while you learn, under your participant code
+(Settings > Study shows when it was last sent). If you were offline, it is sent the next time you open the app.
+Please open the app with internet at least once at the end of the study.
+
+[Only if your study uses `upload=0` links: nothing is sent automatically. At **[dates]**, and at the end:]
 
 1. Open **Settings**.
 2. Under **Backup**, press **Download backup**. Keep the file as your own copy.

@@ -1,8 +1,9 @@
 /**
  * Researcher dashboard (#/researcher). Not in the main menu: it is opened from Settings.
  *  - This learner: data health, help decisions with their probabilities and outcomes.
- *  - Pool exports: load several participants' JSON exports and get the pooled report and CSV files,
- *    computed in the browser. Nothing is uploaded anywhere.
+ *  - Research database: sign in, open studies, make participant links, and analyse what participants' devices
+ *    sent (js/ui/research-db.js).
+ *  - Pool exports: load several participants' JSON exports and get the pooled report and CSV files.
  * Not available while a learner is enrolled in a study, so participants never see the policy internals.
  */
 import { h, md } from '../lib/dom.js';
@@ -10,6 +11,7 @@ import { store } from '../store.js';
 import { readEvents, download } from '../log.js';
 import { POLICY_VERSION, DATA_VERSION } from '../engine/help-policy.js';
 import { toast } from './common.js';
+import { researchDbPanel } from './research-db.js';
 
 const pct = (x) => (x === null || x === undefined ? 'n/a' : `${Math.round(x * 100)}%`);
 const probText = (d) => (d.arms || []).map((a) => `${a[0]}:${d.probs && d.probs[a] !== undefined ? Number(d.probs[a]).toFixed(2) : '?'}`).join(' ');
@@ -54,44 +56,52 @@ async function armSummary(state) {
     h('tbody', ARMS.map((a) => h('tr', h('td', a), h('td', String(v.arms[a].chosen)), h('td', pct(v.arms[a].value)), h('td', v.arms[a].ipw === null ? 'n/a' : String(v.arms[a].ipw))))));
 }
 
+/**
+ * Pool a list of participant exports (files, or rebuilt from the research database) and show the reports
+ * and the CSV downloads in `out`. Returns the pooled data, or null when nothing was usable.
+ */
+export async function showPooled(out, parsed, note = '') {
+  const A = await import('../../tools/analysis.mjs');
+  const data = A.pool(parsed);
+  if (!data.participants.length) { out.replaceChildren(h('p.small', 'No usable participant data found.')); return null; }
+  const summary = A.summarise(data);
+  const RQ = await import('../../tools/research-questions.mjs');
+  const rqMd = RQ.researchQuestionsMarkdown(A.researchQuestions(data, { boot: 200 }));
+  const report = A.reportMarkdown(summary, data);
+  out.replaceChildren(
+    h('p.small', `${note}${data.participants.length} participants, ${data.decisions.length} help decisions, ${data.checks.length} unaided checks.`),
+    h('pre.pool-report', report),
+    h('pre.pool-report', rqMd),
+    h('div.row-wrap',
+      h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => download('participants.csv', A.participantsCsv(data), 'text/csv') }, 'participants.csv'),
+      h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => setTimeout(() => download('decisions.csv', A.pooledDecisionsCsv(data), 'text/csv'), 0) }, 'decisions.csv'),
+      h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => download('checks.csv', A.pooledChecksCsv(data), 'text/csv') }, 'checks.csv'),
+      h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => download('help-seeking.csv', A.learnersCsv(data), 'text/csv') }, 'help-seeking.csv'),
+      h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => download('episodes.csv', A.episodesCsv(data), 'text/csv') }, 'episodes.csv'),
+      h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => download('unit-tests.csv', A.testsCsv(data), 'text/csv') }, 'unit-tests.csv'),
+      h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => { download('report.md', report, 'text/markdown'); toast('Report downloaded.', 'download'); } }, 'report.md'),
+      h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => { download('research-questions.md', rqMd, 'text/markdown'); toast('Report downloaded.', 'download'); } }, 'research-questions.md')));
+  return data;
+}
+
 function poolPanel() {
   const out = h('div.stack');
-  let last = null;
   const input = h('input', { type: 'file', accept: 'application/json,.json', multiple: true, hidden: true, 'aria-label': 'Choose export files' });
   input.addEventListener('change', async () => {
     const files = [...(input.files || [])];
     input.value = '';
     if (!files.length) return;
-    const A = await import('../../tools/analysis.mjs');
     const parsed = [];
     const skipped = [];
     for (const f of files) {
       try { parsed.push(JSON.parse(await f.text())); } catch { skipped.push(f.name); }
     }
-    const data = A.pool(parsed);
-    if (!data.participants.length) { out.replaceChildren(h('p.small', 'No usable exports found. Use the "Download (JSON)" files from Settings.')); return; }
-    const summary = A.summarise(data);
-    const RQ = await import('../../tools/research-questions.mjs');
-    const rqMd = RQ.researchQuestionsMarkdown(A.researchQuestions(data, { boot: 200 }));
-    last = { data, A, md: A.reportMarkdown(summary, data), rqMd };
-    out.replaceChildren(
-      h('p.small', `Read ${parsed.length} of ${files.length} files: ${data.participants.length} participants, ${data.decisions.length} decisions, ${data.checks.length} unaided checks.${skipped.length ? ` Could not read: ${skipped.join(', ')}.` : ''}`),
-      h('pre.pool-report', last.md),
-      h('pre.pool-report', last.rqMd),
-      h('div.row-wrap',
-        h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => download('participants.csv', A.participantsCsv(data), 'text/csv') }, 'participants.csv'),
-        h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => setTimeout(() => download('decisions.csv', A.pooledDecisionsCsv(data), 'text/csv'), 0) }, 'decisions.csv'),
-        h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => download('checks.csv', A.pooledChecksCsv(data), 'text/csv') }, 'checks.csv'),
-        h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => download('help-seeking.csv', A.learnersCsv(data), 'text/csv') }, 'help-seeking.csv'),
-        h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => download('episodes.csv', A.episodesCsv(data), 'text/csv') }, 'episodes.csv'),
-        h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => download('unit-tests.csv', A.testsCsv(data), 'text/csv') }, 'unit-tests.csv'),
-        h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => { download('report.md', last.md, 'text/markdown'); toast('Report downloaded.', 'download'); } }, 'report.md'),
-        h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => { download('research-questions.md', last.rqMd, 'text/markdown'); toast('Report downloaded.', 'download'); } }, 'research-questions.md')));
+    await showPooled(out, parsed, `Read ${parsed.length} of ${files.length} files${skipped.length ? ` (could not read: ${skipped.join(', ')})` : ''}. `);
   });
   return h('div.card.stack',
-    h('h3', 'Pool several participants'),
-    md('Choose the JSON files participants sent you. They are read in this browser only and combined into analysis-ready files. The same tool is available as `node tools/merge-exports.mjs`.', 'small.muted'),
-    h('div', h('button.btn.btn--primary.btn--sm', { type: 'button', onclick: () => input.click() }, 'Choose JSON files')), input, out);
+    h('h3', 'Pool exported files'),
+    md('For studies run without the database (`upload=0`): choose the JSON files participants sent you. They are read in this browser only. The same tool is available as `node tools/merge-exports.mjs`.', 'small.muted'),
+    h('div', h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => input.click() }, 'Choose JSON files')), input, out);
 }
 
 export async function researcherPage(root) {
@@ -102,11 +112,12 @@ export async function researcherPage(root) {
     page.append(h('h1', 'Researcher dashboard'), h('div.callout', 'This is not available while you are taking part in a study.'));
     return;
   }
+  page.append(h('div.page-head', h('h1', 'Researcher dashboard'), h('p.muted', `Help policy ${POLICY_VERSION}, data format ${DATA_VERSION}.`)), researchDbPanel());
   const events = await readEvents(state.profile.id);
   const ds = state.decisions;
   const withOutcome = ds.filter((d) => d.proximal !== null && d.proximal !== undefined).length;
   page.append(
-    h('div.page-head', h('h1', 'Researcher dashboard'), h('p.muted', `Help policy ${POLICY_VERSION}, data format ${DATA_VERSION}. Learner code ${state.profile.code}.`)),
+    h('div.section-title', h('h2', 'This device'), h('span.small.muted', `Your own practice data, learner code ${state.profile.code}`)),
     h('div.stat-row', tile(events.length, 'events'), tile(ds.length, 'help decisions'), tile(withOutcome, 'with an outcome'), tile(Object.values(state.concepts).reduce((n, c) => n + (c.checks ? c.checks.length : 0), 0), 'unaided checks')),
     h('div.insight-grid',
       h('div.card.stack', h('h3', 'Data health'), health(state, events)),

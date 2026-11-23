@@ -99,8 +99,8 @@ test('outcomes are written to the event log as they happen, with their timing', 
 test('study links: parameters are validated and conditions are assigned', () => {
   assert.equal(readStudyParams(''), null);
   assert.equal(readStudyParams('?study=bad code!'), null);
-  assert.deepEqual(readStudyParams('?study=AALTO-1&pid=P01&cond=Fixed'), { id: 'AALTO-1', pid: 'P01', cond: 'fixed', arms: null, floor: null, ai: false });
-  assert.deepEqual(readStudyParams('?study=S&pid=a b'), { id: 'S', pid: null, cond: 'random', arms: null, floor: null, ai: false });
+  assert.deepEqual(readStudyParams('?study=AALTO-1&pid=P01&cond=Fixed'), { id: 'AALTO-1', pid: 'P01', cond: 'fixed', arms: null, floor: null, ai: false, upload: true });
+  assert.deepEqual(readStudyParams('?study=S&pid=a b'), { id: 'S', pid: null, cond: 'random', arms: null, floor: null, ai: false, upload: true });
   assert.deepEqual(readStudyParams('?study=S&arms=Worked,hint,bad&floor=0.1').arms, ['hint', 'worked'], 'teacher-set bounds: valid help types, in a fixed order');
   assert.equal(readStudyParams('?study=S&floor=0.9').floor, 1 / 3, 'the floor is capped at one third');
   assert.equal(readStudyParams('?study=S&cond=bogus').cond, 'random');

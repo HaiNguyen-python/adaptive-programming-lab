@@ -14,6 +14,7 @@ import { mePage } from './ui/me.js';
 import { settingsPage } from './ui/settings.js';
 import { openWelcome } from './ui/welcome.js';
 import { readStudyParams, setPendingStudy } from './study.js';
+import { startSync } from './sync.js';
 import { confirmSheet, openSheet } from './ui/common.js';
 
 const ROUTES = [
@@ -108,6 +109,7 @@ async function boot() {
     });
   });
   onAppChange(render);
+  startSync();
   window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => applyLook());
   render();
   if (lateStudy) {

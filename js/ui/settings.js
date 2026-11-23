@@ -1,7 +1,7 @@
-/** Settings: look, learning, help from Kip, learners on this device, research data, about. */
+/** Settings: look, learning, help from Nova, learners on this device, research data, about. */
 import { h, md } from '../lib/dom.js';
 import { iconSvg } from '../lib/icons.js';
-import { kipSvg, KIP_COLORS } from '../lib/art.js';
+import { novaSvg, NOVA_COLORS } from '../lib/art.js';
 import { store, save, saveNow, updateProfile, switchProfile, deleteProfile, resetProgress, importProfile } from '../store.js';
 import { parseBackup } from '../backup.js';
 import { applyLook, emitChange, clockShift, setClockShift, log } from '../app.js';
@@ -12,6 +12,7 @@ import { HELP_NAME, POLICY_VERSION } from '../engine/help-policy.js';
 import { exportJson, exportCsv, exportBackup, addEvents, clearEvents } from '../log.js';
 import { segmented, switchEl, confirmSheet, toast } from './common.js';
 import { openWelcome } from './welcome.js';
+import { AI_MODELS, getKey, setKey, testConnection, aiModel } from '../ai.js';
 
 const row = (title, sub, control) => h('div.set-row', h('div.grow', h('b', title), sub ? h('span', sub) : null), control);
 const group = (title, ...rows) => h('section.set-group', h('h2', title), rows);
@@ -34,14 +35,14 @@ export function settingsPage(root) {
   page.append(group('Learning',
     row('Daily goal', 'How much XP you aim for each day.', segmented(GOALS.map((g) => ({ value: g.xp, label: `${g.xp} XP` })), s.dailyGoal, (v) => set(() => { s.dailyGoal = Number(v); }), 'Daily goal')),
     study ? null : row('Unit tests', 'A short starting check before each unit, a test after it and again one week later, so you can see how much you learned and kept.', switchEl(s.unitTests, (v) => { set(() => { s.unitTests = v; }); log('setting', { name: 'unitTests', value: v }); }, 'Unit tests')),
-    study ? null : row('Confidence rating', 'Before a question, Kip asks how sure you are. Afterwards you see how well you judged yourself.',
+    study ? null : row('Confidence rating', 'Before a question, Nova asks how sure you are. Afterwards you see how well you judged yourself.',
       segmented([{ value: 'checks', label: 'Solo checks' }, { value: 'all', label: 'Every question' }, { value: 'off', label: 'Off' }], s.confidence, (v) => { set(() => { s.confidence = v; }); log('setting', { name: 'confidence', value: v }); }, 'Confidence rating'))));
 
   // ---- study (fixed settings)
   if (study) {
     page.append(group('Study',
       h('div.set-row.set-row--col', h('div.grow', h('b', `You are taking part in ${study.id}`),
-        h('span', `Your code is ${study.pid || state.profile.code}. How Kip chooses help, the confidence ratings and the other settings that belong to the study are fixed, so everyone's results can be compared. You can stop at any time: delete this learner below.`)))));
+        h('span', `Your code is ${study.pid || state.profile.code}. How Nova chooses help, the confidence ratings and the other settings that belong to the study are fixed, so everyone's results can be compared. You can stop at any time: delete this learner below.`)))));
   }
 
   // ---- help
@@ -59,25 +60,28 @@ export function settingsPage(root) {
     }, HELP_NAME[k]);
     return row(HELP_NAME[k], sub, sw);
   });
-  if (!study) page.append(group('Help from Kip',
+  if (!study) page.append(group('Help from Nova',
     h('div.set-row.set-row--col',
-      h('div.grow', h('b', 'How Kip chooses the help'), h('span', 'Help always comes after you have tried, and it is never the answer.')),
-      segmented([{ value: 'adaptive', label: 'Adapts to me' }, { value: 'fixed', label: 'Same order every time' }], s.helpMode, (v) => { set(() => { s.helpMode = v; }); log('setting', { name: 'helpMode', value: v }); note.replaceChildren(md(modeNote(v), 'small.muted')); }, 'How Kip chooses the help'),
+      h('div.grow', h('b', 'How Nova chooses the help'), h('span', 'Help always comes after you have tried, and it is never the answer.')),
+      segmented([{ value: 'adaptive', label: 'Adapts to me' }, { value: 'fixed', label: 'Same order every time' }], s.helpMode, (v) => { set(() => { s.helpMode = v; }); log('setting', { name: 'helpMode', value: v }); note.replaceChildren(md(modeNote(v), 'small.muted')); }, 'How Nova chooses the help'),
       (() => { note = h('div', md(modeNote(s.helpMode), 'small.muted')); return note; })()),
     ...helpRows,
-    row('Walkthrough as a last step', 'When every hint is used and you are still stuck, Kip can show the solution, and you then build it yourself.', switchEl(s.allow.walkthrough, (v) => { set(() => { s.allow.walkthrough = v; }); log('setting', { name: 'allow.walkthrough', value: v }); }, 'Walkthrough'))));
+    row('Walkthrough as a last step', 'When every hint is used and you are still stuck, Nova can show the solution, and you then build it yourself.', switchEl(s.allow.walkthrough, (v) => { set(() => { s.allow.walkthrough = v; }); log('setting', { name: 'allow.walkthrough', value: v }); }, 'Walkthrough'))));
+
+  // ---- AI tutor (optional)
+  if (!study || study.ai) page.append(aiGroup(state, study, set));
 
   // ---- learners
   const nameInput = h('input.input', { type: 'text', maxlength: '24', value: state.profile.name, 'aria-label': 'Your name' });
   nameInput.addEventListener('change', () => { updateProfile({ name: nameInput.value }); emitChange(); });
-  const swatches = h('div.swatches', Object.entries(KIP_COLORS).map(([id, c]) => h(`button.swatch${id === state.profile.color ? '.is-on' : ''}`, {
+  const swatches = h('div.swatches', Object.entries(NOVA_COLORS).map(([id, c]) => h(`button.swatch${id === state.profile.color ? '.is-on' : ''}`, {
     type: 'button', 'aria-label': c.name, 'aria-pressed': id === state.profile.color ? 'true' : 'false', style: { '--c': c.edge },
     onclick: () => { updateProfile({ color: id }); emitChange(); },
   })));
   const others = store.profiles.list.filter((p) => p.id !== state.profile.id);
   page.append(group('Learners on this device',
-    h('div.set-row', h('div', { style: { width: '56px', flex: 'none' }, html: kipSvg('happy', state.profile.color) }), h('div.grow.stack', nameInput, swatches)),
-    ...others.map((p) => h('div.set-row', h('div', { style: { width: '40px', flex: 'none' }, html: kipSvg('happy', p.color) }), h('div.grow', h('b', p.name)),
+    h('div.set-row', h('div', { style: { width: '56px', flex: 'none' }, html: novaSvg('happy', state.profile.color) }), h('div.grow.stack', nameInput, swatches)),
+    ...others.map((p) => h('div.set-row', h('div', { style: { width: '40px', flex: 'none' }, html: novaSvg('happy', p.color) }), h('div.grow', h('b', p.name)),
       h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => { switchProfile(p.id); location.hash = '#/learn'; emitChange(); } }, 'Switch'))),
     study ? null : h('div.set-row', h('div.grow', h('b', 'Add a learner'), h('span', 'Each learner has their own progress.')),
       h('button.btn.btn--ghost.btn--sm', { type: 'button', html: iconSvg('plus'), onclick: () => {
@@ -169,6 +173,46 @@ export function settingsPage(root) {
 let note = null;
 function modeNote(mode) {
   return mode === 'adaptive'
-    ? 'Kip looks at how well you know the idea and how many tries you have had, and picks the kind of help most likely to let you solve the next question on your own. Now and then it tries a different kind, to keep learning what works for you. You can always see why in the help window.'
+    ? 'Nova looks at how well you know the idea and how many tries you have had, and picks the kind of help most likely to let you solve the next question on your own. Now and then it tries a different kind, to keep learning what works for you. You can always see why in the help window.'
     : 'You always get a hint first, then a more specific hint, then a worked example.';
+}
+
+/** Settings for Nova's optional AI tutor. The key is kept in this browser only and never exported. */
+function aiGroup(state, study, set) {
+  const s = state.settings;
+  const keyInput = h('input.input', { type: 'password', autocomplete: 'off', spellcheck: 'false', placeholder: getKey() ? 'A key is saved on this device' : 'Paste a Claude API key', 'aria-label': 'Claude API key' });
+  const status = h('span.small.muted', { 'aria-live': 'polite' }, getKey() ? 'A key is saved on this device.' : 'No key saved.');
+  const saveKey = h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: () => {
+    if (!keyInput.value.trim()) return;
+    setKey(keyInput.value);
+    keyInput.value = '';
+    keyInput.placeholder = 'A key is saved on this device';
+    status.textContent = 'Key saved on this device.';
+    log('setting', { name: 'aiKey', value: 'saved' });
+  } }, 'Save key');
+  const removeKey = h('button.btn.btn--quiet.btn--sm', { type: 'button', onclick: () => {
+    setKey('');
+    keyInput.placeholder = 'Paste a Claude API key';
+    status.textContent = 'Key removed.';
+    log('setting', { name: 'aiKey', value: 'removed' });
+  } }, 'Remove key');
+  const test = h('button.btn.btn--ghost.btn--sm', { type: 'button', onclick: async () => {
+    if (!getKey()) { status.textContent = 'Save a key first.'; return; }
+    status.textContent = 'Testing…';
+    test.disabled = true;
+    try { status.textContent = `It works. Nova says: ${await testConnection(aiModel(state))}`; } catch (e) { status.textContent = `It did not work: ${(e && e.message) || 'unknown error'}. Check the key and your internet connection.`; }
+    test.disabled = false;
+  } }, 'Test');
+  const rows = [];
+  if (!study) {
+    rows.push(h('div.set-row', h('div.grow', h('b', 'Use the AI tutor'), h('span', 'Nova writes hints, explanation questions and worked examples for the answer each learner gives. The help policy still chooses which kind of help; the written hints are used whenever the AI is not available.')),
+      switchEl(s.ai.enabled, (v) => { set(() => { s.ai.enabled = v; }); log('setting', { name: 'aiEnabled', value: v }); }, 'Use the AI tutor')));
+    rows.push(h('div.set-row.set-row--col', h('div.grow', h('b', 'Model'), h('span', AI_MODELS.map((m) => `${m.label}: ${m.note}`).join('. ') + '.')),
+      segmented(AI_MODELS.map((m) => ({ value: m.id, label: m.label.replace('Claude ', '') })), s.ai.model, (v) => { set(() => { s.ai.model = v; }); log('setting', { name: 'aiModel', value: v }); }, 'Model')));
+  }
+  rows.push(h('div.set-row.set-row--col',
+    h('div.grow', h('b', 'Claude API key'), h('span', study ? 'This study uses the AI tutor. The researcher enters the key on this device.' : 'For teachers and researchers. The key stays in this browser only: it is not exported, backed up or shown again. Usage is billed to the account the key belongs to.')),
+    h('div.row-wrap', keyInput, saveKey, removeKey, test), status));
+  rows.push(h('div.set-row.set-row--col', h('div.callout.callout--warn', md('**Privacy:** when the AI tutor is on, the task, the current answer of the learner and any explanation they write are sent to Anthropic to write the help. Names are never sent. Tell learners (and parents) before switching it on, and check that your ethics approval covers it in a study.', 'small'))));
+  return h('section.set-group', h('h2', 'AI tutor (optional)'), rows);
 }

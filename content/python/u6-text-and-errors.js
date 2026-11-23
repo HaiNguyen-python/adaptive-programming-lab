@@ -84,11 +84,11 @@ export default {
         },
         {
           kind: 'spot',
-          prompt: 'This program should print `[kip]`, but it prints spaces inside the brackets. Tap the line with the bug.',
-          code: ['name = "  kip  "', 'name.strip()', 'print(f"[{name}]")'],
+          prompt: 'This program should print `[nova]`, but it prints spaces inside the brackets. Tap the line with the bug.',
+          code: ['name = "  nova  "', 'name.strip()', 'print(f"[{name}]")'],
           bugLine: 2,
           fix: 'name = name.strip()',
-          expect: '[kip]',
+          expect: '[nova]',
           explain: '`strip()` gives back a new string, but line 2 throws it away. Storing it with `name = name.strip()` keeps the clean text.',
         },
         {

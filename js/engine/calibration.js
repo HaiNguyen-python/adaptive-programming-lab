@@ -52,7 +52,7 @@ export function checkFeedback(conf, ok) {
   const p = confProb(conf);
   if (ok && p >= 0.75) return 'You felt sure, and you were right. Good judgement.';
   if (ok && p <= 0.25) return 'You know more than you thought. Trust yourself a little more here.';
-  if (!ok && p >= 0.75) return 'You felt sure, but this one slipped. Kip will bring it back soon.';
+  if (!ok && p >= 0.75) return 'You felt sure, but this one slipped. Nova will bring it back soon.';
   if (!ok && p <= 0.25) return 'You saw this coming. Knowing what you do not know yet is a skill too.';
   return ok ? 'Your "maybe" turned into a yes.' : 'It was a "maybe", and this time it was a miss.';
 }

@@ -1,5 +1,5 @@
 /**
- * Drawings made for PhD Programming Lab: Kip the spark (the mascot), confidence faces, badges and scenery.
+ * Drawings made for PhD Programming Lab: Nova the spark (the mascot), confidence faces, badges and scenery.
  * Everything is inline SVG text, so it scales cleanly and needs no image files.
  */
 import { iconSvg } from './icons.js';
@@ -22,7 +22,7 @@ function sparkPath(cx, cy, R, r, rot = 0) {
   return `${d}Z`;
 }
 
-export const KIP_COLORS = {
+export const NOVA_COLORS = {
   ember: { name: 'Ember', hi: '#fff3c4', mid: '#ffc24b', edge: '#ff8a3d', ray: '#f0701f' },
   flame: { name: 'Sunny', hi: '#fffbe0', mid: '#ffe38a', edge: '#ffc24b', ray: '#e9a21a' },
   aurora: { name: 'Aurora', hi: '#eafff6', mid: '#93f0cd', edge: '#45d3a0', ray: '#27a87c' },
@@ -52,17 +52,17 @@ function face(mood) {
 }
 
 /**
- * Kip as SVG text. mood: happy, cheer, proud, think, oops, wow, wink, sleep.
- * color: a key of KIP_COLORS.
+ * Nova as SVG text. mood: happy, cheer, proud, think, oops, wow, wink, sleep.
+ * color: a key of NOVA_COLORS.
  */
-export function kipSvg(mood = 'happy', color = 'ember', cls = 'kip') {
-  const c = KIP_COLORS[color] || KIP_COLORS.ember;
-  const id = `kip${serial++}`;
+export function novaSvg(mood = 'happy', color = 'ember', cls = 'nova') {
+  const c = NOVA_COLORS[color] || NOVA_COLORS.ember;
+  const id = `nova${serial++}`;
   const arms = mood === 'cheer'
     ? `<path d="M33 54q-12 -8 -9 -22M87 54q12 -8 9 -22" fill="none" stroke="${c.edge}" stroke-width="7" stroke-linecap="round"/>`
     : '';
   const extra = mood === 'sleep' ? `<path d="M88 26h9l-9 10h9M100 12h6l-6 7h6" fill="none" stroke="${c.ray}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>` : '';
-  return `<svg class="${cls}" viewBox="0 0 120 120" role="img" aria-label="Kip the spark">`
+  return `<svg class="${cls}" viewBox="0 0 120 120" role="img" aria-label="Nova the spark">`
     + `<defs><radialGradient id="${id}" cx="42%" cy="34%" r="75%"><stop offset="0" stop-color="${c.hi}"/><stop offset=".55" stop-color="${c.mid}"/><stop offset="1" stop-color="${c.edge}"/></radialGradient></defs>`
     + `<path d="${sparkPath(60, 62, 57, 19)}" fill="${c.ray}"/>`
     + `<path d="${sparkPath(60, 62, 42, 24, Math.PI / 4)}" fill="${c.edge}"/>`
@@ -78,7 +78,7 @@ function el(svg) {
   return t.content.firstChild;
 }
 
-export const kip = (mood, color, cls) => el(kipSvg(mood, color, cls));
+export const nova = (mood, color, cls) => el(novaSvg(mood, color, cls));
 
 /** The brand mark: a spark between code brackets. */
 export function logoSvg() {

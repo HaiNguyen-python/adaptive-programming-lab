@@ -3,7 +3,7 @@
 Learn to code. Make it stick.
 
 PhD Programming Lab is an adaptive programming-learning app for all ages: short, game-like lessons in
-**Python, JavaScript, SQL, and HTML & CSS**, with a guide called Kip. It runs entirely in the browser.
+**Python, JavaScript, SQL, and HTML & CSS**, with a guide called Nova. It runs entirely in the browser.
 Real Python (Pyodide), real SQLite (sql.js) and sandboxed JavaScript run the learner's code, so every
 output is exactly what the real language produces.
 
@@ -37,6 +37,8 @@ public CDNs the first time they are needed (addresses in `js/config.js`).
 | Micro-randomised trial logging | Every help option keeps a minimum probability (default 0.2), and each decision is logged with the probability of every option, so the data supports causal excursion effects and off-policy evaluation. |
 | Expertise reversal (H2b) | Priors favour worked examples at low prior knowledge and hints at high prior knowledge; the bandit then learns per learner. |
 | Fairness / not worse than the fixed tutor | A "same order every time" mode is the fixed guardrail tutor (hint, more specific hint, worked example). In adaptive mode every help type stays reachable. |
+| LLM tutor (optional) | Nova's **AI tutor** (Claude, with a teacher's or researcher's own key) writes the hint, the self-explanation question or the worked example the policy chose, for the learner's actual answer. Answers are filtered out before anything is shown, AI worked examples are run for real, the written help is the fallback, and each decision records who wrote it. |
+| Error messages explained | Nova gives a plain-language reading of common Python, JavaScript and SQL errors (what it means, what to check), never the fix. |
 | Transparency (EU AI Act) | Each help window explains, in plain words, why that kind of help was chosen and shows the probabilities. Learners can switch help types on or off. |
 | Overall learning (Paper III pre-, post- and delayed tests) | Every unit has a **starting check** before its first lesson, a **unit test** after its last lesson and a **one-week test** a week later: one unaided question per lesson, three different counterbalanced items, confidence rated, no feedback until the end. Me shows before / after / one week per unit. |
 | Teacher-set bounds (human in the loop) | Study links can set the help types the policy may use and the minimum probability (`arms=hint,explain&floor=0.25`); they are logged and locked. |

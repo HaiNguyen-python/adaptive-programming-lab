@@ -1,7 +1,7 @@
 /** The Learn screen: today's goal, memory checks that are due, and the trail of lessons. */
 import { h, md, plural, relDay, formatDate } from '../lib/dom.js';
 import { iconSvg } from '../lib/icons.js';
-import { kip, kipSvg, treeSvg, campSvg, lanternSvg, svgEl } from '../lib/art.js';
+import { nova, novaSvg, treeSvg, campSvg, lanternSvg, svgEl } from '../lib/art.js';
 import { store, save } from '../store.js';
 import { now, log, emitChange } from '../app.js';
 import * as catalog from '../catalog.js';
@@ -52,7 +52,7 @@ export function launchLesson(course, lesson) {
   }
   const sheet = openSheet({
     title: 'First, a quick starting check',
-    body: h('div.stack', h('div.help-kind', kip('think', state.profile.color), h('div', h('h3', unit.title), h('div.small.muted', `${plural(n, 'question')}, one try each, no help`))),
+    body: h('div.stack', h('div.help-kind', nova('think', state.profile.color), h('div', h('h3', unit.title), h('div.small.muted', `${plural(n, 'question')}, one try each, no help`))),
       md('Answer what you can, and it is fine to guess or get things wrong: you have not learned this yet. After the unit you take a similar test, so you can see how much you learned. You see your score at the end.')),
     foot,
   });
@@ -144,7 +144,7 @@ export function certificate(course) {
   const sheet = openSheet({
     title: 'Your certificate',
     body: h('div.cert',
-      svgEl(kipSvg('cheer', state.profile.color)),
+      svgEl(novaSvg('cheer', state.profile.color)),
       h('div.small', APP.name),
       h('h2', 'Certificate of completion'),
       h('p', 'This certifies that'),
@@ -204,7 +204,7 @@ function campBlock(course, unit, unitIndex, firstIndex, width, openId) {
     const label = status === 'locked' ? `${lesson.title}. Locked.` : status === 'done' ? `${lesson.title}. Done.${due ? ' Memory check ready.' : ''}` : `${lesson.title}. Start.`;
     return h(`div.node.node--${status}${due ? '.is-due' : ''}${p.k > 0.1 ? '.is-left' : ''}`, { style: { left: `${p.x.toFixed(1)}px`, top: `${p.y - 39}px` } },
       h('button.node-btn', { type: 'button', 'aria-label': label, onclick: () => lessonSheet(course, lesson), html: iconSvg(status === 'done' ? 'flame' : status === 'open' ? 'play' : 'lock') }),
-      here ? svgEl(kipSvg('happy', state.profile.color, 'kip-here')) : null,
+      here ? svgEl(novaSvg('happy', state.profile.color, 'nova-here')) : null,
       h('div.node-label', lesson.title),
       status === 'done' ? flamesEl(flames(concept)) : null);
   });
@@ -263,7 +263,7 @@ export function learnPage(root) {
   const state = store.state;
   const course = currentCourse();
   if (!course) {
-    root.append(h('div.page', h('div.empty', kip('oops'), h('h2', 'No courses could be loaded'), h('p', 'Reload the page to try again.'))));
+    root.append(h('div.page', h('div.empty', nova('oops'), h('h2', 'No courses could be loaded'), h('p', 'Reload the page to try again.'))));
     return;
   }
   if (state.course !== course.id) { state.course = course.id; save(); }
@@ -288,7 +288,7 @@ export function learnPage(root) {
     trail);
   page.append(h('div.learn-grid', main, h('aside.aside-cards.only-wide', { 'aria-label': 'Your progress' }, statCards(course),
     h('div.card.stack', h('h3', 'How this works'),
-      md('**Try first.** Kip helps after your first attempt, with a hint or a similar example, never the answer.\n\n**Prove it alone.** After help, you get one question on your own.\n\n**Make it stick.** Kip checks again the next day and one week later.', 'small.muted')))));
+      md('**Try first.** Nova helps after your first attempt, with a hint or a similar example, never the answer.\n\n**Prove it alone.** After help, you get one question on your own.\n\n**Make it stick.** Nova checks again the next day and one week later.', 'small.muted')))));
   root.append(page);
 
   function drawTrail() {

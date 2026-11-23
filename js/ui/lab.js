@@ -1,5 +1,5 @@
 /** The playground: write and run your own code in any of the four languages. */
-import { h } from '../lib/dom.js';
+import { h, md } from '../lib/dom.js';
 import { iconSvg } from '../lib/icons.js';
 import { createEditor } from '../lib/editor.js';
 import { store, save } from '../store.js';
@@ -8,7 +8,9 @@ import * as catalog from '../catalog.js';
 import { DB_SQL, DB_TABLES } from '../../content/sql/db.js';
 import { run, previewDoc, runtimeStatus, warmUp } from '../run/runners.js';
 import { checkBadges } from '../engine/rewards.js';
-import { outputPanel, resultTable, previewFrame, toast } from './common.js';
+import { outputPanel, resultTable, previewFrame, toast, errorHelp } from './common.js';
+import { aiActive, aiModel, playgroundHint } from '../ai.js';
+import { novaSvg } from '../lib/art.js';
 import { LAB_LANGS, SAMPLES, sampleCode } from './lab-samples.js';
 
 function tableColumns(name) {
@@ -59,6 +61,25 @@ export function labPage(root) {
     });
     const stdin = h('textarea.input', { rows: '2', 'aria-label': 'Answers for input()', placeholder: 'One answer per line', style: { padding: '10px 14px', fontFamily: 'var(--font-code)' } });
     const runBtn = h('button.btn.btn--primary', { type: 'button', html: iconSvg('play') }, 'Run');
+    let lastRun = null;
+    const askBtn = h('button.btn.btn--ghost', { type: 'button', html: iconSvg('bulb') }, 'Ask Nova');
+    askBtn.addEventListener('click', async () => {
+      askBtn.disabled = true;
+      status.textContent = 'Nova is reading your code…';
+      const code = editor.getValue();
+      const err = lastRun && lastRun.err ? lastRun.err.text : '';
+      const output = lastRun ? (lastRun.result ? lastRun.out : lastRun.out) : '';
+      try {
+        const r = await playgroundHint({ lang, code, output, error: err, model: aiModel(state) });
+        out.querySelectorAll('.nova-explain.is-ai').forEach((x) => x.remove());
+        out.append(h('div.nova-explain.is-ai', h('div', { html: novaSvg('think', state.profile.color, 'nova-mini') }), h('div.stack', { style: { gap: '4px' } }, h('b', 'Nova'), md(r.text, 'small'), h('span.tiny.muted', `AI tutor (${r.model})`))));
+        log('lab_ai_hint', { lang, chars: code.length, hadError: !!err, model: r.model, text: r.text, inputTokens: r.usage.input_tokens, outputTokens: r.usage.output_tokens });
+        status.textContent = '';
+      } catch (e) {
+        status.textContent = `Nova could not answer just now (${(e && e.message) || 'error'}).`;
+      }
+      askBtn.disabled = false;
+    });
     const samples = h('select.input', { 'aria-label': 'Examples', style: { width: 'auto', minHeight: '48px' } },
       h('option', { value: '' }, 'Examples'), SAMPLES[lang].map((s, i) => h('option', { value: String(i) }, s.name)));
     samples.addEventListener('change', () => {
@@ -72,14 +93,15 @@ export function labPage(root) {
       runBtn.disabled = true;
       status.textContent = runtimeStatus(lang) === 'ready' ? 'Running…' : lang === 'python' ? 'Getting Python ready. The first time takes a few seconds…' : 'Opening the database…';
       const res = await run(lang, editor.getValue(), lang === 'sql' ? { seed: DB_SQL } : { stdin: stdin.value });
+      lastRun = res;
       runBtn.disabled = false;
       status.textContent = '';
       out.replaceChildren();
       if (lang === 'sql') {
-        if (res.err) out.append(outputPanel(res.err.text, { error: true, label: 'Error' }));
+        if (res.err) out.append(outputPanel(res.err.text, { error: true, label: 'Error' }), errorHelp('sql', res.err, state.profile.color) || '');
         else if (res.sets && res.sets.length) res.sets.forEach((s) => out.append(resultTable(s)));
         else out.append(h('div.callout', 'Done. No rows to show: this statement changed the database or returned nothing. Every run starts from a fresh copy of the database.'));
-      } else if (res.err) out.append(outputPanel(`${res.out || ''}${res.err.text}`, { error: true }));
+      } else if (res.err) out.append(outputPanel(`${res.out || ''}${res.err.text}`, { error: true }), errorHelp(lang, res.err, state.profile.color) || '');
       else out.append(outputPanel(res.out.replace(/\n$/, '')));
       if (!res.unavailable) {
         state.counters.runs++;
@@ -98,7 +120,7 @@ export function labPage(root) {
       left.append(h('div.run-row', samples));
       right.append(h('div', h('div.preview-label', 'Live preview'), frame));
     } else {
-      left.append(h('div.run-row', runBtn, samples, status));
+      left.append(h('div.run-row', runBtn, aiActive(state) ? askBtn : null, samples, status));
       if (lang === 'python') left.append(h('details.why', h('summary', 'Does your program use input()?'), h('div.stack', { style: { marginTop: '8px' } }, h('span.small', 'Type the answers here before you press Run, one per line.'), stdin)));
       right.append(h('div.preview-label', lang === 'sql' ? 'Result' : 'Output'), out);
       out.append(h('div.muted.small', lang === 'sql' ? 'Press Run to see the rows your query returns.' : 'Press Run to see what your program prints. Tip: Ctrl + Enter also runs it.'));

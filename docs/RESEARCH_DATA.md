@@ -22,6 +22,8 @@ research-question analyses added in app version 1.1.
      blocked randomisation list; logged as `assignment: given`).
    - `arms` (optional): the help types the policy may use, set with the teachers, for example
      `arms=hint,explain`. Unknown names are ignored. Default: all three.
+   - `ai=1` (optional): Nova's AI tutor writes the content of the help (section 9). Leave it out to use the
+     written hints only. With `ai=1` the researcher enters a Claude API key on each participant device.
    - `floor` (optional): the minimum probability of each allowed help type in the adaptive condition,
      0 to 1/3 (capped). Default 0.2.
    - A link without a valid `pid` does not enrol anyone: the participant is asked for their personal link.
@@ -76,6 +78,10 @@ testing tool was in use (not possible in a study). `session` links events of one
 | `item_result` | itemId, lessonId, kind, role, solo, firstTry, correct, attempts, helps, walkthrough, skipped, conf, ms, xp, memory, pL, stage | the final record of an item |
 | `setting` | name, value | changes to help mode, probability floor, cost weight, confidence mode, allowed help types |
 | `lab_run` | lang, ok, chars | a run in the free playground |
+| `ai_help` | decision, itemId, arm, model, ms, inputTokens, outputTokens, hint, question, worked | the AI tutor wrote the content of a help decision (section 9) |
+| `ai_fallback` | decision, itemId, arm, reason, message, kind | the AI tutor was not used for a decision and the written help was shown (`reason`: `leak`, `invalid_example`, `refusal`, `max_tokens`, `format`, or an error status) |
+| `ai_explain_feedback` | decision, itemId, model, text | the AI tutor answered what the learner wrote when explaining a hint |
+| `lab_ai_hint` | lang, chars, hadError, model, text | a hint about the learner's own code in the Playground |
 | `test_skipped` | test, unit, course | the learner skipped a unit's starting check (not possible in a study) |
 
 Unit tests are sessions with `kind: 'test'` (`session_start` also has `test`: `pre`, `post` or `delayed`, and
@@ -105,6 +111,7 @@ One row per help request.
 | `u` | the uniform draw that selected the arm: `sampleFrom(() => 0, probs, u)` reproduces `arm` |
 | `floor`, `costWeight`, `allow` | the settings in force |
 | `arm`, `cost` | help type given (`hint`, `explain`, `worked`) and its cost (worked 2, others 1) |
+| `source`, `model`, `aiMs`, `aiError` | who wrote the help: `authored` (the written hints) or `ai`; the model and the time it took; why the AI was not used when it was on |
 | `proximal`, `proximalRole`, `proximalItemId`, `proximalAt` | 1/0 on the first unaided check after the help (same session, same lesson) and which check it was |
 | `nextDay`, `nextDayGap` | 1/0 on the first stage-1 memory check after the day of the decision, and days elapsed |
 | `week`, `weekGap` | the same for the stage-2 (one-week) check |
@@ -225,3 +232,33 @@ using the pooled CSV files.
 The outcome model in the doubly robust estimator is deliberately simple (pass rate by prior knowledge and
 help type, shrunk towards the help type's mean). Because the propensities are logged, the estimate stays
 unbiased even when that model is wrong; the tests check this on simulated data with a known truth.
+
+## 9. Nova's AI tutor (optional)
+
+The plan studies LLM tutors. Nova can use one: a teacher or researcher switches it on in Settings with their
+own Claude API key (kept in that browser only, never exported or backed up). Off by default; in a study it is
+used only when the study link has `ai=1`.
+
+- **The design is unchanged.** The help policy still chooses the kind of help (hint, hint with a
+  self-explanation question, worked example) with the same logged probabilities. The AI only writes the
+  content for the chosen kind, for the learner's actual answer. `source` on each decision says who wrote it.
+- **What is sent.** The lesson, the task, the code or pieces offered, the learner's current answer and the
+  feedback they saw, and help already given on that item. The answer key is never sent; names are never sent.
+- **Guards before anything is shown.** Every response is checked for the answer (the solution lines, the
+  filled-in line, the right order, the corrected line, the expected output); a response that contains it is
+  discarded (`ai_fallback`, `reason: leak`). An AI worked example is run in the learner's runtime and the
+  real output is shown; if it does not run, it is discarded (`invalid_example`). On any problem the written
+  help is shown, so a decision always gets help.
+- **Requests.** Anthropic's JavaScript SDK (`RUNTIME.anthropicSdk` in `js/config.js`), structured JSON output,
+  effort `low` for hints and `medium` for worked examples, and Anthropic's server-side refusal fallback
+  (`fallbacks: "default"`), retried once without it if the model does not accept it. Default model Claude Opus
+  5.5; Sonnet 5.5 and Haiku 5.5 can be chosen in Settings. What the AI wrote is in `ai_help` events.
+- **Self-explanation feedback.** When a learner explains a hint in their own words, Nova answers in one or two
+  sentences: what is right, and one question if something is missing (`ai_explain_feedback`).
+- **Ethics.** Learners' answers and explanations go to Anthropic while it is on. The app says so in Settings.
+  Make sure participants (and parents) are told and that the ethics approval covers it.
+
+Nova also explains error messages without any AI: `js/engine/errors.js` gives a plain-language reading of the
+common Python, JavaScript and SQL errors (what it means and what to check, never the fixed code). It is shown
+under error output in coding tasks and the Playground, in both conditions. Its patterns are tested against the
+real messages of CPython, Node and SQLite (`tests/errors.test.mjs`).

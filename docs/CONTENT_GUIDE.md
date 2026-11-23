@@ -62,7 +62,7 @@ Text fields (`text`, `prompt`, `explain`, `why`, hints, goals, worked steps) sup
 - No contractions ("do not", not "don't"). It reads more clearly and avoids quote problems.
 - Introduce each new term once in **bold** with a plain explanation. Use the term consistently after that.
 - No em dashes. Use a comma, a colon or a full stop.
-- Speak to the learner as "you". Kip is the app's mascot; mention Kip rarely.
+- Speak to the learner as "you". Nova is the app's mascot; mention Nova rarely.
 - Examples use everyday, friendly themes: games, pets, snacks, music, sport, weather, camping, space,
   school. Invented names from many cultures. No brands, no real people, no real-world facts that could be
   wrong or change (populations, records, prices, dates of events).
@@ -270,7 +270,7 @@ one week later, so each must stand alone and test understanding, not memory of t
 
 - HTML5, lowercase tags, double-quoted attributes, 2-space indentation. Code is a page fragment until the
   lesson on page structure. CSS goes in a `<style>` block at the top of the code.
-- No scripts. Images only from `assets/img/kip.svg`, `assets/img/tent.svg`, `assets/img/lantern.svg`,
+- No scripts. Images only from `assets/img/nova.svg`, `assets/img/tent.svg`, `assets/img/lantern.svg`,
   `assets/img/campfire.svg`. Links point to `https://example.com`.
 - No `predict` items. `teach` cards may add `preview: true` to show the rendered page. `fill`, `order` and
   `spot` items have no `output`, `expect` or `error` (nothing is run), so make distractors clearly wrong.

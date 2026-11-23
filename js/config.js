@@ -3,9 +3,9 @@ export const APP = {
   name: 'PhD Programming Lab',
   short: 'PhD',
   rest: 'Programming Lab',
-  version: '1.1.0',
+  version: '1.2.0',
   tagline: 'Learn to code. Make it stick.',
-  mascot: 'Kip',
+  mascot: 'Nova',
 };
 
 /**
@@ -16,6 +16,8 @@ export const APP = {
 export const RUNTIME = {
   pyodide: 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/',
   sqljs: 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/',
+  // Anthropic's official JavaScript SDK, loaded only when the optional AI tutor is switched on.
+  anthropicSdk: 'https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.6.0/+esm',
   runTimeoutMs: 6000,
   loadTimeoutMs: 60000,
 };

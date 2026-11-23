@@ -9,7 +9,7 @@
  */
 import { h, md, mdInline, plural, relDay } from '../lib/dom.js';
 import { iconSvg } from '../lib/icons.js';
-import { kip, confFaceSvg, medalSvg, svgEl } from '../lib/art.js';
+import { nova, novaSvg, confFaceSvg, medalSvg, svgEl } from '../lib/art.js';
 import { play, confetti, burst } from '../lib/effects.js';
 import { store, save } from '../store.js';
 import { rng, now, log, tutorCtx, emitChange, clockShift } from '../app.js';
@@ -19,7 +19,8 @@ import { current, needsConfidence, requestHelp, recordItem, advance, summarize, 
 import { availableArms, helpSeekingFlags, explainChoice, HELP_NAME } from '../engine/help-policy.js';
 import { CONF_LEVELS, checkFeedback } from '../engine/calibration.js';
 import { getConcept, flames } from '../engine/mastery.js';
-import { warmUp } from '../run/runners.js';
+import { warmUp, run } from '../run/runners.js';
+import { aiActive, aiModel, generateHelp, feedbackOnExplanation } from '../ai.js';
 import { isTestRole, learningGain } from '../engine/unit-tests.js';
 import { openSheet, confirmSheet, toast, codeBlock, resultTable, previewFrame, flamesEl } from './common.js';
 import { teachView, traceView, itemView } from './items.js';
@@ -146,7 +147,7 @@ export function openPlayer({ session, course, onClose }) {
     save();
     const fresh = session.notes.slice(notesSeen).filter((n) => n.type === 'skipped').length;
     notesSeen = session.notes.length;
-    if (fresh) toast('You are on a roll, so Kip skipped an easier question.', 'bolt');
+    if (fresh) toast('You are on a roll, so Nova skipped an easier question.', 'bolt');
     show();
   }
 
@@ -190,7 +191,7 @@ export function openPlayer({ session, course, onClose }) {
       renderItem();
     }, html: confFaceSvg(c.level) }, h('span', c.label)));
     stage.replaceChildren(h('div.stage.solo-card',
-      kip('think', state.profile.color),
+      nova('think', state.profile.color),
       h('span.tag.tag--solo', role.tag),
       h('h2', role.title),
       md(`Next comes a question on **${lesson.concept}**${entry.solo ? ', with no help' : ''}. How sure are you that you will get it right?`),
@@ -233,9 +234,9 @@ export function openPlayer({ session, course, onClose }) {
     if (it.walkthrough) return { show: true, enabled: true, label: 'Show the walkthrough', again: 'walk' };
     if (it.fails === 0) return { show: true, enabled: false, label: 'Help', note: 'Have a go first. Help opens after your first try.' };
     if (it.lastHelp && it.fails === it.failsAtHelp) return { show: true, enabled: true, label: 'Show the help again', again: 'help' };
-    if (arms.length) return { show: true, enabled: true, label: 'Ask Kip for help', calling: it.fails >= 2 && !it.helps.length };
+    if (arms.length) return { show: true, enabled: true, label: 'Ask Nova for help', calling: it.fails >= 2 && !it.helps.length };
     if (allow.walkthrough && it.fails - Math.max(0, it.failsAtHelp) >= 2) return { show: true, enabled: true, label: 'Walk me through it', walk: true };
-    if (allow.walkthrough) return { show: true, enabled: false, label: 'Help', note: 'You have every hint for this one. Try twice more and Kip will walk you through it.' };
+    if (allow.walkthrough) return { show: true, enabled: false, label: 'Help', note: 'You have every hint for this one. Try twice more and Nova will walk you through it.' };
     return { show: true, enabled: false, label: 'Help', note: 'You have every hint for this one. Give it another go.' };
   }
 
@@ -292,8 +293,9 @@ export function openPlayer({ session, course, onClose }) {
     mine.view.retry(res);
     mine.changed = false;
     const hs = helpState();
-    const stuck = hs.enabled && !hs.again && mine.fails >= 2 ? md(hs.walk ? 'Still stuck? Kip can walk you through it.' : 'Stuck? Kip can give you a nudge.', 'small') : null;
-    mine.feedback = feedbackEl('bad', pickOf(['Not quite', 'Not yet', 'Almost']), 0, md(res.why || defaultWhy(item, res)), res.detail || null, stuck);
+    const stuck = hs.enabled && !hs.again && mine.fails >= 2 ? md(hs.walk ? 'Still stuck? Nova can walk you through it.' : 'Stuck? Nova can give you a nudge.', 'small') : null;
+    mine.lastWhy = res.why || defaultWhy(item, res);
+    mine.feedback = feedbackEl('bad', pickOf(['Not quite', 'Not yet', 'Almost']), 0, md(mine.lastWhy), res.detail || null, stuck);
     paintBar();
   }
 
@@ -312,8 +314,8 @@ export function openPlayer({ session, course, onClose }) {
     if (it.conf) extra.push(md(checkFeedback(it.conf, correct), 'small'));
     if (r.memory) {
       extra.push(md(correct
-        ? `You remembered this ${r.memory.gapDays <= 0 ? 'today' : `after ${plural(r.memory.gapDays, 'day')}`}. Kip will check it again ${relDay(r.memory.nextInDays)}.`
-        : 'This one faded a little. Kip will bring it back tomorrow.', 'small'));
+        ? `You remembered this ${r.memory.gapDays <= 0 ? 'today' : `after ${plural(r.memory.gapDays, 'day')}`}. Nova will check it again ${relDay(r.memory.nextInDays)}.`
+        : 'This one faded a little. Nova will bring it back tomorrow.', 'small'));
     }
     let fb;
     if (correct) {
@@ -370,7 +372,7 @@ export function openPlayer({ session, course, onClose }) {
       save();
       const sheet = openSheet({
         title: 'One more look first?',
-        body: h('div.stack', h('div.help-kind', kip('wink', state.profile.color), md('People remember more when they wrestle with a problem a little longer before getting help. Try once more, and the help will still be here.'))),
+        body: h('div.stack', h('div.help-kind', nova('wink', state.profile.color), md('People remember more when they wrestle with a problem a little longer before getting help. Try once more, and the help will still be here.'))),
         foot: [
           h('button.btn.btn--ghost', { type: 'button', onclick: () => { sheet.close(); giveHelp(); } }, 'Help me now'),
           h('button.btn.btn--primary', { type: 'button', onclick: () => sheet.close() }, 'I will try again'),
@@ -392,10 +394,38 @@ export function openPlayer({ session, course, onClose }) {
     if (arm === 'worked') it.workedUsed = true; else it.hintsUsed++;
     it.failsAtHelp = it.fails;
     it.lastHelp = help;
+    help.decision.source = 'authored';
     save();
     play('help');
     paintBar();
-    showHelp(help, true);
+    if (aiActive(state)) aiHelp(help); else showHelp(help, true);
+  }
+
+  /**
+   * Ask the AI tutor to write the help the policy chose. The learner sees a short wait; on any problem the
+   * written help is shown instead. What happened is recorded on the decision and in the event log.
+   */
+  async function aiHelp(help) {
+    const mine = it;
+    const d = help.decision;
+    const wait = openSheet({ title: 'Nova is thinking', body: h('div.help-kind', nova('think', state.profile.color), h('p', 'Nova is looking at your answer…')), dismissable: false });
+    const previous = mine.aiTexts || [];
+    try {
+      const out = await generateHelp({
+        arm: d.arm, lesson: mine.lesson, item: mine.item, model: aiModel(state), run,
+        attempt: mine.view.answerText ? mine.view.answerText() : '', feedback: mine.lastWhy || '', previous,
+      });
+      if (out.kind === 'worked') help.worked = out.worked; else { help.hint = out.hint; help.question = out.question; }
+      d.source = 'ai'; d.model = out.model; d.aiMs = out.ms;
+      mine.aiTexts = [...(mine.aiTexts || []), out.hint || out.worked.problem];
+      log('ai_help', { decision: d.id, itemId: mine.item.id, lessonId: mine.entry.lessonId, arm: d.arm, model: out.model, ms: out.ms, inputTokens: out.usage.input_tokens, outputTokens: out.usage.output_tokens, hint: out.hint || null, question: out.question || null, worked: out.worked || null });
+    } catch (e) {
+      d.source = 'authored'; d.aiError = (e && (e.code || e.status || e.name)) || 'error';
+      log('ai_fallback', { decision: d.id, itemId: mine.item.id, lessonId: mine.entry.lessonId, arm: d.arm, reason: String(d.aiError), message: String((e && e.message) || '').slice(0, 200) });
+    }
+    save();
+    wait.close();
+    if (it === mine && !closed) showHelp(help, true);
   }
 
   function whyNode(d) {
@@ -444,13 +474,14 @@ export function openPlayer({ session, course, onClose }) {
       explain: 'Read the hint, then put it in your own words.',
       worked: 'A similar problem, solved step by step. Then back to yours.',
     }[arm];
-    body.append(h('div.help-kind', kip(arm === 'worked' ? 'happy' : 'think', state.profile.color), h('div', h('h3', HELP_NAME[arm]), h('div.small.muted', sub))));
+    body.append(h('div.help-kind', nova(arm === 'worked' ? 'happy' : 'think', state.profile.color), h('div', h('h3', HELP_NAME[arm]), h('div.small.muted', sub))));
     let needExplain = false;
     let done = null;
     if (arm === 'worked') body.append(workedNode(help.worked, lang, fresh, null));
     else body.append(h('div.help-text', md(help.hint)));
+    if (d.source === 'ai') body.append(h('div.tiny.muted', `Written by Nova's AI tutor (${d.model}) for your answer, and checked so it does not contain the answer.`));
     if (arm === 'explain') {
-      if (help.explained) body.append(h('div.stack', h('div.small.muted', 'You wrote:'), h('div.help-text', help.explained)));
+      if (help.explained) body.append(h('div.stack', h('div.small.muted', 'You wrote:'), h('div.help-text', help.explained), help.explainFeedback ? h('div.nova-explain', h('div', h('b', 'Nova'), md(help.explainFeedback, 'small'))) : null));
       else {
         needExplain = true;
         const ta = h('textarea', { 'aria-label': 'Your explanation', placeholder: 'Write one or two sentences', 'data-autofocus': '' });
@@ -458,23 +489,42 @@ export function openPlayer({ session, course, onClose }) {
         const t0 = now();
         done = h('button.btn.btn--primary', { type: 'button', disabled: true }, 'Done');
         ta.addEventListener('input', () => { done.disabled = ta.value.trim().length < 15; });
-        done.addEventListener('click', () => {
+        done.addEventListener('click', async () => {
           help.explained = ta.value.trim();
           state.counters.explains++;
           log('explain', { session: session.id, itemId: it.item.id, lessonId: it.entry.lessonId, decision: d.id, chars: help.explained.length, text: help.explained, ms: now() - t0 });
           save();
-          sheet.close();
-        });
-        body.append(h('div.explain-box.stack',
-          h('label', { style: { fontWeight: '600' } }, 'Now say it in your own words: what is this hint telling you to do?'),
+          if (!aiActive(state)) { sheet.close(); return; }
+          // With the AI tutor on, Nova answers the learner's explanation (what is right, one question if not).
+          done.disabled = true;
+          done.textContent = 'Nova is reading…';
+          const mine = it;
+          try {
+            const fb = await feedbackOnExplanation({ lesson: mine.lesson, item: mine.item, hint: help.hint, explanation: help.explained, model: aiModel(state) });
+            help.explainFeedback = fb.text;
+            log('ai_explain_feedback', { decision: d.id, itemId: mine.item.id, model: fb.model, text: fb.text, inputTokens: fb.usage.input_tokens, outputTokens: fb.usage.output_tokens });
+            save();
+            ta.disabled = true;
+            box.after(h('div.nova-explain', h('div', { html: novaSvg('happy', state.profile.color, 'nova-mini') }), h('div', h('b', 'Nova'), md(fb.text, 'small'))));
+            done.textContent = 'Back to my question';
+            done.disabled = false;
+            done.onclick = () => sheet.close();
+          } catch (e) {
+            log('ai_fallback', { decision: d.id, itemId: mine.item.id, kind: 'explain_feedback', reason: String((e && (e.code || e.status)) || 'error') });
+            sheet.close();
+          }
+        }, { once: true });
+        var box = h('div.explain-box.stack',
+          h('label', { style: { fontWeight: '600' } }, help.question || 'Now say it in your own words: what is this hint telling you to do?'),
           ta,
           h('div.starters', starters.map((s) => h('button', { type: 'button', onclick: () => { ta.value = s; ta.focus(); done.disabled = true; } }, `${s.trim()}…`))),
-          h('div.tiny.muted', 'Explaining it yourself is the part that helps you remember. One or two sentences are enough.')));
+          h('div.tiny.muted', 'Explaining it yourself is the part that helps you remember. One or two sentences are enough.'));
+        body.append(box);
       }
     }
     body.append(whyNode(d));
     const sheet = openSheet({
-      title: fresh ? 'Kip is here to help' : 'Your help for this question',
+      title: fresh ? 'Nova is here to help' : 'Your help for this question',
       body,
       dismissable: !needExplain,
       foot: needExplain ? [done] : [h('button.btn.btn--primary', { type: 'button', onclick: () => sheet.close() }, 'Back to my question')],
@@ -493,10 +543,10 @@ export function openPlayer({ session, course, onClose }) {
     const sheet = openSheet({
       title: 'Let us walk through it',
       body: h('div.stack-l',
-        h('div.help-kind', kip('happy', state.profile.color), h('div', h('h3', 'Here is one way to do it'), h('div.small.muted', 'Read it, close this, then build it yourself.'))),
+        h('div.help-kind', nova('happy', state.profile.color), h('div', h('h3', 'Here is one way to do it'), h('div.small.muted', 'Read it, close this, then build it yourself.'))),
         it.view.solution(),
         h('div.help-text', md(it.item.explain)),
-        h('div.callout', 'Building it yourself after seeing it is what makes it stick. This question does not count as solved on your own, so Kip will check the idea again soon.')),
+        h('div.callout', 'Building it yourself after seeing it is what makes it stick. This question does not count as solved on your own, so Nova will check the idea again soon.')),
       foot: [h('button.btn.btn--primary', { type: 'button', onclick: () => sheet.close() }, 'Now I will do it')],
     });
   }
@@ -523,7 +573,7 @@ export function openPlayer({ session, course, onClose }) {
       const concept = getConcept(state, session.lessonId);
       const finishedCourse = out.firstTime && !nextLesson(state, course);
       box.append(
-        kip('cheer', state.profile.color),
+        nova('cheer', state.profile.color),
         h('h1', finishedCourse ? 'Course complete!' : out.firstTime ? 'Lesson complete!' : 'Practice makes it stick'),
         h('p.muted', lesson.title),
         h('div.tiles',
@@ -532,13 +582,13 @@ export function openPlayer({ session, course, onClose }) {
           tile(`${s.checks.right}/${s.checks.total}`, s.checks.total === 1 ? 'solo check passed' : 'solo checks passed')),
         h('div.note-card', { html: iconSvg('flame', 'ic') }, h('div',
           h('h4', h('span', 'One flame lit '), flamesEl(flames(concept))),
-          md('Kip will check this idea again **tomorrow** and **one week later**, without help. Passing those checks lights the other two flames.', 'small'))));
+          md('Nova will check this idea again **tomorrow** and **one week later**, without help. Passing those checks lights the other two flames.', 'small'))));
       if (s.helpTotal) {
         const passed = s.checks.right === s.checks.total;
         box.append(h('div.note-card', { html: iconSvg('bulb', 'ic') }, h('div', h('h4', `You asked for help ${s.helpTotal === 1 ? 'once' : `${s.helpTotal} times`}`),
           md(passed ? 'Then you showed you could do it on your own. That is what help is for.' : 'The solo checks show what is not solid yet. That is useful to know, and tomorrow gives you another go.', 'small'))));
       }
-      if (s.skipped) box.append(h('div.note-card', { html: iconSvg('bolt', 'ic') }, h('div', h('h4', 'Fast track'), md(`You answered so well that Kip skipped ${plural(s.skipped, 'easier question')}.`, 'small'))));
+      if (s.skipped) box.append(h('div.note-card', { html: iconSvg('bolt', 'ic') }, h('div', h('h4', 'Fast track'), md(`You answered so well that Nova skipped ${plural(s.skipped, 'easier question')}.`, 'small'))));
     } else if (session.type === 'test') {
       const unit = course.units.find((u) => u.id === session.unitId);
       const r = (state.tests && state.tests[session.unitId]) || {};
@@ -547,11 +597,11 @@ export function openPlayer({ session, course, onClose }) {
       const title = { pre: 'Starting check done', post: 'Unit test done', delayed: 'One-week test done' }[session.testKind];
       const lead = {
         pre: 'Now you know where you start. After the unit, a test like this one shows how far you came.',
-        post: 'Kip will give you one more test like this in a week, to see what stays with you.',
+        post: 'Nova will give you one more test like this in a week, to see what stays with you.',
         delayed: 'This is the real measure of learning: what you can still do a week later, on your own.',
       }[session.testKind];
       box.append(
-        kip(s.checks.right >= s.checks.total / 2 ? 'proud' : 'happy', state.profile.color),
+        nova(s.checks.right >= s.checks.total / 2 ? 'proud' : 'happy', state.profile.color),
         h('h1', title), h('p.muted', unit ? unit.title : ''),
         h('div.tiles',
           tile(pct(g.pre), 'starting check', ''),
@@ -563,9 +613,9 @@ export function openPlayer({ session, course, onClose }) {
       const passed = session.unitScores.filter((u) => u.passed).length;
       const start = course.units[Math.min(passed, course.units.length - 1)];
       box.append(
-        kip(passed ? 'proud' : 'happy', state.profile.color),
+        nova(passed ? 'proud' : 'happy', state.profile.color),
         h('h1', passed >= course.units.length ? 'You know this course well' : passed ? `You start at unit ${passed + 1}` : 'You start at the beginning'),
-        h('p.muted', passed >= course.units.length ? 'Every unit is open. Kip will still check these ideas in a week.' : passed ? `${start.title}. Kip will check the units you skipped in a week, to make sure they are solid.` : 'A good place to start. Every lesson here is short.'),
+        h('p.muted', passed >= course.units.length ? 'Every unit is open. Nova will still check these ideas in a week.' : passed ? `${start.title}. Nova will check the units you skipped in a week, to make sure they are solid.` : 'A good place to start. Every lesson here is short.'),
         h('div.check-list', session.unitScores.map((u) => h(`div.check-row.${u.passed ? 'is-ok' : 'is-bad'}`, { html: iconSvg(u.passed ? 'check' : 'x', 'state') },
           h('div.grow', h('b', u.title), h('span.small.muted', `${u.right} of ${u.total} right`)), h('span.tag', u.passed ? 'Skipped' : 'Start here')))));
     } else {
@@ -573,7 +623,7 @@ export function openPlayer({ session, course, onClose }) {
       const right = s.checks.right;
       const review = session.type === 'review';
       box.append(
-        kip(right === all ? 'cheer' : right >= all / 2 ? 'proud' : 'oops', state.profile.color),
+        nova(right === all ? 'cheer' : right >= all / 2 ? 'proud' : 'oops', state.profile.color),
         h('h1', review ? 'Memory check done' : 'Practice done'),
         h('p.muted', all ? `You remembered ${right} of ${all} without help.` : 'Nothing was due today.'),
         h('div.tiles', tile(`+${s.xp}`, 'XP earned', 'tile--xp'), tile(`${right}/${all}`, 'remembered'), tile(String(s.minutes), s.minutes === 1 ? 'minute' : 'minutes')),

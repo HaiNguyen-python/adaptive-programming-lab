@@ -114,7 +114,7 @@ export default {
         },
         {
           kind: 'write',
-          prompt: 'Kip saves `4` coins every week. Use a `while` loop to print the savings after each week, one number per line:\n\n`4`\n`8`\n`12`\n`16`\n`20`',
+          prompt: 'Nova saves `4` coins every week. Use a `while` loop to print the savings after each week, one number per line:\n\n`4`\n`8`\n`12`\n`16`\n`20`',
           starter: ['let coins = 4;', ''],
           solution: ['let coins = 4;', 'while (coins <= 20) {', '  console.log(coins);', '  coins += 4;', '}'],
           expectOutput: ['4', '8', '12', '16', '20'],

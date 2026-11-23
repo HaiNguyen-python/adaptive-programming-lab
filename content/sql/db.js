@@ -1,5 +1,5 @@
 /**
- * The practice database for the SQL course: Kip's Camp Shop.
+ * The practice database for the SQL course: Nova's Camp Shop.
  * Every lesson, check item and playground run starts from a fresh copy of this database.
  * All people and products are invented. Do not change rows without re-running the verifier:
  * lesson answers depend on this data.

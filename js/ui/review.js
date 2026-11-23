@@ -1,6 +1,6 @@
 /** The Memory screen: checks that are due, what is coming up, and free practice. */
 import { h, md, plural, relDay } from '../lib/dom.js';
-import { kip, lanternSvg, svgEl } from '../lib/art.js';
+import { nova, lanternSvg, svgEl } from '../lib/art.js';
 import { store } from '../store.js';
 import { now, log } from '../app.js';
 import * as catalog from '../catalog.js';
@@ -33,15 +33,15 @@ export function reviewPage(root) {
   if (due.length) {
     page.append(h('div.card.memory-card', svgEl(lanternSvg(true)),
       h('div.grow', h('h3', `${plural(due.length, 'idea')} ready to check`),
-        h('div.small.muted', due.length > 8 ? 'Kip checks up to 8 at a time. Each one is a single question, without help.' : 'One question each, without help. It takes a few minutes.')),
+        h('div.small.muted', due.length > 8 ? 'Nova checks up to 8 at a time. Each one is a single question, without help.' : 'One question each, without help. It takes a few minutes.')),
       h('button.btn.btn--primary', { type: 'button', onclick: launchReview }, 'Start')));
   } else if (!learned.length) {
-    page.append(h('div.card.empty', kip('happy', state.profile.color), h('h3', 'Nothing to check yet'),
-      h('p', 'Finish a lesson, and Kip will check it here the next day and one week later.'),
+    page.append(h('div.card.empty', nova('happy', state.profile.color), h('h3', 'Nothing to check yet'),
+      h('p', 'Finish a lesson, and Nova will check it here the next day and one week later.'),
       h('a.btn.btn--primary', { href: '#/learn' }, 'Go to the lessons')));
   } else {
     const first = upcoming[0];
-    page.append(h('div.card.empty', kip('proud', state.profile.color), h('h3', 'All caught up'),
+    page.append(h('div.card.empty', nova('proud', state.profile.color), h('h3', 'All caught up'),
       h('p', first ? `Your next memory check is ${relDay(first.days)}.` : 'Every idea you have learned is fresh.')));
   }
 

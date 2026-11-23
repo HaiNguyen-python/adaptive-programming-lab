@@ -80,10 +80,10 @@ export default {
         },
         {
           kind: 'write',
-          prompt: 'Your turn. Write a program that prints these two lines:\n\n`Hello, Kip!`\n`Time to code.`',
+          prompt: 'Your turn. Write a program that prints these two lines:\n\n`Hello, Nova!`\n`Time to code.`',
           starter: '',
-          solution: ['print("Hello, Kip!")', 'print("Time to code.")'],
-          expectOutput: ['Hello, Kip!', 'Time to code.'],
+          solution: ['print("Hello, Nova!")', 'print("Time to code.")'],
+          expectOutput: ['Hello, Nova!', 'Time to code.'],
           hints: [
             'You need two instructions, one for each line on the screen.',
             'Each line looks like `print("...")` with your text between the quotes. Copy the text exactly, including the comma and the full stop.',
@@ -513,8 +513,8 @@ export default {
           kind: 'teach',
           title: 'f-strings: values inside text',
           text: 'An **f-string** puts values right inside text. Write `f` before the opening quote, and put a variable inside curly braces `{ }`.\n\nPython replaces each `{name}` with the value. This works with numbers too, so you do not need `str()`.',
-          code: ['name = "Kip"', 'xp = 50', 'print(f"{name} has {xp} XP")'],
-          output: 'Kip has 50 XP',
+          code: ['name = "Nova"', 'xp = 50', 'print(f"{name} has {xp} XP")'],
+          output: 'Nova has 50 XP',
         },
         {
           kind: 'fill',

@@ -528,14 +528,14 @@ export default {
           kind: 'teach',
           title: 'The plan',
           text: 'In this lesson you build a **profile card**: a small box that introduces someone, with a picture, a name, a short text and a link.\n\nStart with the HTML. A `<div>` with the class `card` holds everything. Inside it go the image and a second `<div>` that groups the heading, the text and the link.',
-          code: ['<div class="card">', '  <img src="assets/img/kip.svg" alt="Kip">', '  <div>', '    <h2>Kip</h2>', '    <p>I love camping.</p>', '    <a href="https://example.com">Say hi</a>', '  </div>', '</div>'],
+          code: ['<div class="card">', '  <img src="assets/img/nova.svg" alt="Nova">', '  <div>', '    <h2>Nova</h2>', '    <p>I love camping.</p>', '    <a href="https://example.com">Say hi</a>', '  </div>', '</div>'],
           preview: true,
           previewHeight: 280,
         },
         {
           kind: 'mcq',
           prompt: 'How many children does the `card` div have? Children are the elements directly inside it.',
-          code: ['<div class="card">', '  <img src="assets/img/kip.svg" alt="Kip">', '  <div>', '    <h2>Kip</h2>', '    <p>I love camping.</p>', '  </div>', '</div>'],
+          code: ['<div class="card">', '  <img src="assets/img/nova.svg" alt="Nova">', '  <div>', '    <h2>Nova</h2>', '    <p>I love camping.</p>', '  </div>', '</div>'],
           options: [
             { t: '2', ok: true },
             { t: '4', why: 'The heading and the text are inside the inner `<div>`, so they are its children, not children of the card.' },
@@ -611,7 +611,7 @@ export default {
           kind: 'teach',
           title: 'The whole card',
           text: 'Here is the finished card: the HTML from the start of the lesson, styled by one `.card` rule. The rule uses flexbox for the row and the box model for the edge and the space.\n\nTwo short declarations can share a line, as long as each one ends with a semicolon.',
-          code: ['<style>', '  .card {', '    display: flex; gap: 16px;', '    padding: 16px; border: 2px solid teal;', '  }', '</style>', '<div class="card">', '  <img src="assets/img/kip.svg" alt="Kip">', '  <div>', '    <h2>Kip</h2>', '    <p>I love camping.</p>', '    <a href="https://example.com">Say hi</a>', '  </div>', '</div>'],
+          code: ['<style>', '  .card {', '    display: flex; gap: 16px;', '    padding: 16px; border: 2px solid teal;', '  }', '</style>', '<div class="card">', '  <img src="assets/img/nova.svg" alt="Nova">', '  <div>', '    <h2>Nova</h2>', '    <p>I love camping.</p>', '    <a href="https://example.com">Say hi</a>', '  </div>', '</div>'],
           preview: true,
           previewHeight: 200,
         },
@@ -635,14 +635,14 @@ export default {
         },
       ],
       worked: {
-        title: 'Worked example: a small card for Kip',
-        problem: 'Make a card with the class `pet` that holds the Kip picture and the heading `Kip`. Put them in a row with a 10px gap, with 12px of padding and a `2px dashed orange` border.',
+        title: 'Worked example: a small card for Nova',
+        problem: 'Make a card with the class `pet` that holds the Nova picture and the heading `Nova`. Put them in a row with a 10px gap, with 12px of padding and a `2px dashed orange` border.',
         steps: [
-          { label: 'Write the HTML', text: 'A `<div>` with the class `pet` holds the image and the heading.', code: ['<div class="pet">', '  <img src="assets/img/kip.svg" alt="Kip">', '  <h2>Kip</h2>', '</div>'] },
+          { label: 'Write the HTML', text: 'A `<div>` with the class `pet` holds the image and the heading.', code: ['<div class="pet">', '  <img src="assets/img/nova.svg" alt="Nova">', '  <h2>Nova</h2>', '</div>'] },
           { label: 'Make the row', text: 'The `.pet` div is the parent, so it gets flexbox.', code: ['.pet {', '  display: flex;', '  gap: 10px;', '}'] },
           { label: 'Style the box', code: ['  padding: 12px;', '  border: 2px dashed orange;'] },
         ],
-        code: ['<style>', '  .pet {', '    display: flex;', '    gap: 10px;', '    padding: 12px;', '    border: 2px dashed orange;', '  }', '</style>', '<div class="pet">', '  <img src="assets/img/kip.svg" alt="Kip">', '  <h2>Kip</h2>', '</div>'],
+        code: ['<style>', '  .pet {', '    display: flex;', '    gap: 10px;', '    padding: 12px;', '    border: 2px dashed orange;', '  }', '</style>', '<div class="pet">', '  <img src="assets/img/nova.svg" alt="Nova">', '  <h2>Nova</h2>', '</div>'],
       },
       pool: [
         {

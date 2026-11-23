@@ -51,7 +51,7 @@ export function buildJson(state, events, now = new Date(), { eventLog = 'ok' } =
 
 export const EVENT_COLUMNS = ['learner', 'study', 'pid', 'cond', 'time', 't', 'type', 'session', 'kind', 'lesson', 'lessonId', 'itemId', 'role', 'solo', 'attempt', 'firstTry', 'correct', 'attempts', 'helps', 'walkthrough', 'skipped', 'conf', 'ms', 'xp', 'pL', 'stage', 'arm', 'policy', 'pk', 'errors', 'probs', 'chars', 'shift', 'detail'];
 
-export const DECISION_COLUMNS = ['learner', 'study', 'pid', 'cond', 'time', 't', 'id', 'sessionId', 'lessonId', 'itemId', 'policy', 'pk', 'errors', 'helpsBefore', 'pL', 'arms', 'probs', 'posterior', 'u', 'floor', 'costWeight', 'allow', 'arm', 'cost', 'proximal', 'proximalRole', 'proximalItemId', 'proximalAt', 'nextDay', 'nextDayGap', 'week', 'weekGap', 'shift'];
+export const DECISION_COLUMNS = ['learner', 'study', 'pid', 'cond', 'time', 't', 'id', 'sessionId', 'lessonId', 'itemId', 'policy', 'pk', 'errors', 'helpsBefore', 'pL', 'arms', 'probs', 'posterior', 'u', 'floor', 'costWeight', 'allow', 'arm', 'cost', 'source', 'model', 'aiMs', 'aiError', 'proximal', 'proximalRole', 'proximalItemId', 'proximalAt', 'nextDay', 'nextDayGap', 'week', 'weekGap', 'shift'];
 
 export const CHECK_COLUMNS = ['learner', 'study', 'pid', 'cond', 'time', 't', 'session', 'lessonId', 'itemId', 'kind', 'role', 'conf', 'correct', 'attempts', 'ms', 'pL', 'stageBefore', 'stageAfter', 'gapDays', 'afterHelp', 'shift'];
 

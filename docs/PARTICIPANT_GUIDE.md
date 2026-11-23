@@ -5,17 +5,17 @@ simple: many participants read English as a second language.*
 
 ## What you will do
 
-You will learn a little programming with a small app called **PhD Programming Lab** and its guide, Kip.
+You will learn a little programming with a small app called **PhD Programming Lab** and its guide, Nova.
 Lessons are short. Plan for **[about 15 minutes, [N] times a week, for [N] weeks]**.
 
 You will:
 
-1. Do lessons. Try each question first. If you get stuck, you can ask Kip for help.
-2. Do short **memory checks**. Kip asks again the next day and a week later, with no help. This is how
+1. Do lessons. Try each question first. If you get stuck, you can ask Nova for help.
+2. Do short **memory checks**. Nova asks again the next day and a week later, with no help. This is how
    we see what really stayed in your memory.
 3. Sometimes rate **how sure you are** before an answer. There is no right or wrong rating.
 
-Kip never gives the answer. That is on purpose.
+Nova never gives the answer. That is on purpose.
 
 ## Getting started
 
@@ -42,7 +42,7 @@ Nothing is sent automatically. At **[dates]**, and at the end:
 2. Under **Backup**, press **Download backup**. Keep the file as your own copy.
 3. Under **Research and data**, press **Download (JSON)**.
 4. Send the JSON file to **[email or upload link]**. The file has a code (for example `L-7KQ2MD`)
-   and your participant code, not your name. It also includes the sentences you write when Kip asks you to
+   and your participant code, not your name. It also includes the sentences you write when Nova asks you to
    explain a hint, so please do not write personal details there.
 
 ## If something goes wrong

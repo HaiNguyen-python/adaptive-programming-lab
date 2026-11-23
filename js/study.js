@@ -10,6 +10,7 @@
  *   pid     participant code chosen by the researcher (no names)
  *   cond    adaptive | fixed | random   (random is the default)
  *   arms    optional teacher-set bounds: the help types the policy may use, for example arms=hint,explain
+ *   ai      optional: ai=1 makes Nova's AI tutor part of the condition (the researcher enters the key on the device)
  *   floor   optional minimum probability of each allowed help type in the adaptive condition (0 to 0.33)
  */
 export const CONDITIONS = ['adaptive', 'fixed'];
@@ -36,6 +37,7 @@ export function readStudyParams(search) {
     cond: condRaw === 'adaptive' || condRaw === 'fixed' ? condRaw : 'random',
     arms: armsRaw.length ? [...new Set(armsRaw)].sort((a, b) => HELP_TYPES.indexOf(a) - HELP_TYPES.indexOf(b)) : null,
     floor: floorNum !== null && Number.isFinite(floorNum) ? Math.max(0, Math.min(1 / 3, floorNum)) : null,
+    ai: p.get('ai') === '1',
   };
 }
 
@@ -65,7 +67,7 @@ export function enrol(state, params, { consentAt, consentVersion = STUDY_VERSION
     id: params.id, pid: params.pid, cond: a.cond, assignment: a.assignment, pAssign: a.pAssign,
     requested: params.cond, enrolledAt: consentAt, consentAt, consentVersion, version: STUDY_VERSION,
     // Teacher-set bounds (null = the app's defaults). They are applied to the settings and locked.
-    arms: params.arms || null, floor: params.floor ?? null,
+    arms: params.arms || null, floor: params.floor ?? null, ai: !!params.ai,
   };
   state.settings.helpMode = a.cond;
   if (params.arms) for (const t of HELP_TYPES) state.settings.allow[t] = params.arms.includes(t);

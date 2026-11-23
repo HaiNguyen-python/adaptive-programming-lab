@@ -118,7 +118,7 @@ export default {
         },
         {
           kind: 'write',
-          prompt: 'Kip does `4` warm-up jumps. Use a `while` loop to print `Jump 1`, `Jump 2`, `Jump 3` and `Jump 4`, one per line. After the loop, print `Ready!`',
+          prompt: 'Nova does `4` warm-up jumps. Use a `while` loop to print `Jump 1`, `Jump 2`, `Jump 3` and `Jump 4`, one per line. After the loop, print `Ready!`',
           starter: ['n = 1', ''],
           solution: ['n = 1', 'while n <= 4:', '    print(f"Jump {n}")', '    n += 1', 'print("Ready!")'],
           expectOutput: ['Jump 1', 'Jump 2', 'Jump 3', 'Jump 4', 'Ready!'],

@@ -1,8 +1,10 @@
 /** Shared interface pieces: sheets (dialogs), toasts, code blocks, result tables, small widgets. */
-import { h, md } from '../lib/dom.js';
+import { h, md, mdInline } from '../lib/dom.js';
 import { iconSvg } from '../lib/icons.js';
 import { highlight } from '../lib/highlight.js';
 import { previewDoc } from '../run/runners.js';
+import { explainError } from '../engine/errors.js';
+import { novaSvg } from '../lib/art.js';
 
 const layer = () => document.getElementById('layer');
 const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), select, summary, [tabindex]:not([tabindex="-1"])';
@@ -147,4 +149,13 @@ export function switchEl(checked, onChange, label) {
   input.checked = !!checked;
   input.addEventListener('change', () => onChange(input.checked));
   return h('label.switch', input, h('i'));
+}
+
+/** Nova's plain-language reading of an error message (no fixed code), or null when there is none. */
+export function errorHelp(lang, err, color) {
+  const ex = explainError(lang, err);
+  if (!ex) return null;
+  return h('div.nova-explain', { role: 'note' },
+    h('div', { html: novaSvg('think', color || 'ember', 'nova-mini') }),
+    h('div.stack', { style: { gap: '4px' } }, mdInline(ex.title, 'b'), md(ex.text, 'small')));
 }

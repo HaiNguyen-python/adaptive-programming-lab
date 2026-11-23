@@ -301,9 +301,9 @@ export default {
         {
           kind: 'fill',
           prompt: 'Complete the code with alt text that describes the picture.',
-          code: ['<img src="assets/img/kip.svg" alt="___">'],
-          blanks: ['Kip the mascot'],
-          bank: ['Kip the mascot', 'kip.svg', 'img', 'photo'],
+          code: ['<img src="assets/img/nova.svg" alt="___">'],
+          blanks: ['Nova the mascot'],
+          bank: ['Nova the mascot', 'nova.svg', 'img', 'photo'],
           explain: 'Good alt text says what the picture shows. A file name or a general word does not help a listener.',
         },
         {
@@ -646,9 +646,9 @@ export default {
         {
           kind: 'fill',
           prompt: 'Complete the tag so the picture has alt text that describes it.',
-          code: ['<img src="assets/img/kip.svg" alt="___">'],
-          blanks: ['Kip waving hello'],
-          bank: ['Kip waving hello', 'kip.svg', 'img', 'a file'],
+          code: ['<img src="assets/img/nova.svg" alt="___">'],
+          blanks: ['Nova waving hello'],
+          bank: ['Nova waving hello', 'nova.svg', 'img', 'a file'],
           explain: 'Alt text says what the picture shows, so a person who cannot see it still knows.',
         },
         {

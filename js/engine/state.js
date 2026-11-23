@@ -16,6 +16,7 @@ export const DEFAULT_SETTINGS = {
   floor: 0.2,               // minimum probability of each kind of help (adaptive mode)
   costWeight: 0.05,         // how much the cost of more specific help counts against it
   unitTests: true,          // offer a pre-test before each unit and a post-test after it (always on in a study)
+  ai: { enabled: false, model: 'claude-opus-5-5' },   // optional AI tutor (js/ai.js); the key is stored separately
 };
 
 /** A short, random code that identifies the learner in exported data without using a name. */
@@ -54,6 +55,7 @@ export function repairState(state) {
   const out = { ...fresh, ...state };
   out.settings = { ...fresh.settings, ...(state.settings || {}) };
   out.settings.allow = { ...fresh.settings.allow, ...((state.settings && state.settings.allow) || {}) };
+  out.settings.ai = { ...fresh.settings.ai, ...((state.settings && state.settings.ai) || {}) };
   out.counters = { ...fresh.counters, ...(state.counters || {}) };
   out.counters.helps = { ...fresh.counters.helps, ...((state.counters && state.counters.helps) || {}) };
   for (const key of ['days', 'lessons', 'concepts', 'bandit', 'badges', 'placement', 'tests']) {

@@ -16,7 +16,7 @@ import { shuffle, shuffleChanged } from '../engine/rng.js';
 import { fillCode } from '../engine/content.js';
 import { gradeMcq, gradePredict, gradeFill, gradeOrder, gradeSpot, gradeWriteRun, sourceProblems, sameResult, normOut } from '../engine/grade.js';
 import { run, checkWeb, previewDoc, runtimeStatus } from '../run/runners.js';
-import { codeBlock, outputPanel, resultTable, previewFrame } from './common.js';
+import { codeBlock, outputPanel, resultTable, previewFrame, errorHelp } from './common.js';
 
 const pretty = (s) => (s === '' ? '(nothing)' : s);
 
@@ -199,6 +199,7 @@ function predictTypeView(item, { onChange, onSubmit }) {
   return {
     el: h('div.stack', codeBlock(item.code, item.lang), h('div.answer-box', h('label', tip), ta)),
     ready: () => ta.value.trim() !== '',
+    answerText: () => `They typed this output: ${ta.value}`,
     focus: () => ta.focus(),
     async check() {
       const correct = gradePredict(item, ta.value);
@@ -299,6 +300,8 @@ function fillView(item, { rng, onChange }) {
   return {
     el: h('div.stack', pre, bankEl),
     ready: () => !slots.includes(null),
+    answerText: () => (slots.includes(null) ? '' : `Their filled-in code:
+${fillCode(item.code, tokens())}`),
     async check() {
       const g = gradeFill(item, tokens());
       return { correct: g.correct, why: null, perBlank: g.perBlank };
@@ -361,6 +364,7 @@ function orderView(item, { rng, onChange }) {
   return {
     el: h('div.order-box', target, trayLabel, tray),
     ready: () => placed.length === item.lines.length,
+    answerText: () => (placed.length ? `Their order so far:\n${placed.map((id) => byId.get(id).t).join('\n')}` : ''),
     async check() {
       const g = gradeOrder(item, placed.map((id) => byId.get(id).t));
       return { correct: g.correct, why: null, firstWrong: g.firstWrong };
@@ -418,10 +422,10 @@ function writeView(item, { onChange, course }) {
   function showRun(res) {
     outBox.replaceChildren();
     if (lang === 'sql') {
-      if (res.err) outBox.append(outputPanel(res.err.text, { error: true, label: 'Error' }));
+      if (res.err) outBox.append(outputPanel(res.err.text, { error: true, label: 'Error' }), errorHelp('sql', res.err) || '');
       else if (res.result) outBox.append(resultTable(res.result));
       else outBox.append(h('div.small.muted', 'Done. This statement does not return rows.'));
-    } else if (res.err) outBox.append(outputPanel(`${res.out || ''}${res.err.text}`, { error: true, label: 'Output' }));
+    } else if (res.err) outBox.append(outputPanel(`${res.out || ''}${res.err.text}`, { error: true, label: 'Output' }), errorHelp(lang, res.err) || '');
     else outBox.append(outputPanel(res.out.replace(/\n$/, '')));
   }
   async function doRun() {
@@ -447,6 +451,8 @@ function writeView(item, { onChange, course }) {
   return {
     el: h('div.stack', parts),
     ready: () => editor.getValue().trim() !== '',
+    answerText: () => `Their code:
+${editor.getValue()}`,
     focus: () => editor.focus(),
     async check() {
       const source = editor.getValue();

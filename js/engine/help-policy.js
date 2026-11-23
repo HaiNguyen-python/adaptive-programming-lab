@@ -116,11 +116,11 @@ export function explainChoice(decision) {
   }
   if (decision.arms.length === 1) return 'This was the only kind of help left for this question.';
   const lead = {
-    low: 'This idea is still new for you, so Kip leans towards showing how a similar problem is solved.',
-    mid: 'You know part of this idea, so Kip leans towards a hint that you put into your own words.',
-    high: 'You know this idea quite well, so Kip leans towards a short hint and leaves the rest to you.',
+    low: 'This idea is still new for you, so Nova leans towards showing how a similar problem is solved.',
+    mid: 'You know part of this idea, so Nova leans towards a hint that you put into your own words.',
+    high: 'You know this idea quite well, so Nova leans towards a short hint and leaves the rest to you.',
   }[decision.pk];
-  return `${lead} Kip also tries the other kinds of help now and then, to learn which one works best for you.`;
+  return `${lead} Nova also tries the other kinds of help now and then, to learn which one works best for you.`;
 }
 
 /** Per kind of help: how often it was used and how often the solo check after it was passed. */

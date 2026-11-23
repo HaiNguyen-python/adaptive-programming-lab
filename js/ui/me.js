@@ -6,7 +6,7 @@
  */
 import { h, md, plural, relDay } from '../lib/dom.js';
 import { iconSvg } from '../lib/icons.js';
-import { kipSvg, medalSvg, confFaceSvg, svgEl } from '../lib/art.js';
+import { novaSvg, medalSvg, confFaceSvg, svgEl } from '../lib/art.js';
 import { store } from '../store.js';
 import { now } from '../app.js';
 import * as catalog from '../catalog.js';
@@ -98,7 +98,7 @@ function lastingCard(state) {
   const count = (list) => [list.filter((c) => c.ok).length, list.length];
   const [w1, wn] = count(week);
   const text = wn
-    ? `You kept **${pct(w1 / wn)}** of what Kip checked a week or more later. These checks have no help, so the number shows what you can really do.`
+    ? `You kept **${pct(w1 / wn)}** of what Nova checked a week or more later. These checks have no help, so the number shows what you can really do.`
     : 'Getting a question right in a lesson is the easy part. The real test is whether you can still do it **a week later, without help**. Your first result appears here when a lesson is a week old.';
   return h('div.card.stack',
     h('h3', 'Does it last?'),
@@ -112,7 +112,7 @@ function calibrationCard(state) {
   const cal = calibration(allChecks(state));
   const card = h('div.card.stack', h('h3', 'How well do you judge yourself?'));
   if (!cal.n) {
-    card.append(h('div.empty', { html: confFaceSvg(3) }, h('p', 'Before each solo check, Kip asks how sure you are. After a few checks, you will see here how well your feeling matches your results.')));
+    card.append(h('div.empty', { html: confFaceSvg(3) }, h('p', 'Before each solo check, Nova asks how sure you are. After a few checks, you will see here how well your feeling matches your results.')));
     return card;
   }
   const bars = cal.byLevel.map((l) => ({
@@ -143,7 +143,7 @@ function helpCard(state) {
   const used = ARMS.reduce((n, a) => n + table[a].used, 0);
   const card = h('div.card.stack', h('h3', 'Help that works for you'));
   if (!used) {
-    card.append(h('div.empty', { html: iconSvg('bulb') }, h('p', 'When you get stuck after a first try, Kip can help. Here you will see which kind of help leads to you solving the next question on your own.')));
+    card.append(h('div.empty', { html: iconSvg('bulb') }, h('p', 'When you get stuck after a first try, Nova can help. Here you will see which kind of help leads to you solving the next question on your own.')));
     return card;
   }
   for (const a of ARMS) {
@@ -152,7 +152,7 @@ function helpCard(state) {
       meterRow(HELP_NAME[a], o.passed, o.checked, o.used ? 'not checked yet' : 'not used yet'),
       h('div.tiny.muted', o.used ? `Used ${o.used === 1 ? 'once' : `${o.used} times`}${o.weekChecked ? `. One week later: ${o.weekPassed} of ${o.weekChecked} remembered.` : '.'}` : '')));
   }
-  card.append(md(`The bars show how often you passed the solo check that follows the help. ${state.settings.helpMode === 'adaptive' ? 'Kip uses exactly this to choose your help, and still tries each kind now and then.' : 'Your help comes in a fixed order. You can let Kip adapt it in Settings.'}`, 'small.muted'));
+  card.append(md(`The bars show how often you passed the solo check that follows the help. ${state.settings.helpMode === 'adaptive' ? 'Nova uses exactly this to choose your help, and still tries each kind now and then.' : 'Your help comes in a fixed order. You can let Nova adapt it in Settings.'}`, 'small.muted'));
   if (state.counters.helps.walkthrough) card.append(h('div.tiny.muted', `Walkthroughs used: ${state.counters.helps.walkthrough}.`));
   return card;
 }
@@ -208,7 +208,7 @@ export function mePage(root) {
   const earned = BADGES.filter((b) => state.badges[b.id]).length;
   const tile = (value, label) => h('div.tile', h('b', value), h('span', label));
   const page = h('div.page.page--wide.stack-l',
-    h('div.profile-head', svgEl(kipSvg(st.count >= 3 ? 'proud' : 'happy', state.profile.color)),
+    h('div.profile-head', svgEl(novaSvg(st.count >= 3 ? 'proud' : 'happy', state.profile.color)),
       h('div.grow.stack', { style: { gap: '6px' } }, h('h1', state.profile.name),
         h('div.row-wrap', h('span.tag', `Level ${lv.level}`), h('span.tag', `${state.xp} XP`), h('span.tag', `${lv.to - state.xp} XP to level ${lv.level + 1}`)),
         bar(lv.progress, 'bar--thin'))),

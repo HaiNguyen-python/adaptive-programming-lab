@@ -1,7 +1,7 @@
-/** First-run welcome: who you are, what to learn, how much, and how Kip helps. Also used to add a learner. */
+/** First-run welcome: who you are, what to learn, how much, and how Nova helps. Also used to add a learner. */
 import { h, md } from '../lib/dom.js';
 import { iconSvg } from '../lib/icons.js';
-import { kipSvg, KIP_COLORS, svgEl } from '../lib/art.js';
+import { novaSvg, NOVA_COLORS, svgEl } from '../lib/art.js';
 import { store, save, createProfile } from '../store.js';
 import { applyLook, log } from '../app.js';
 import * as catalog from '../catalog.js';
@@ -12,9 +12,9 @@ import { GOALS } from '../engine/rewards.js';
 
 const HOW = [
   ['target', 'You try first', 'Thinking before you get help is what makes new ideas stick.'],
-  ['bulb', 'Kip nudges, but never tells', 'You get a hint, a hint to explain back, or a similar worked example. Not the answer.'],
+  ['bulb', 'Nova nudges, but never tells', 'You get a hint, a hint to explain back, or a similar worked example. Not the answer.'],
   ['solo', 'You prove it on your own', 'After help comes one question with no help, to show what you can really do.'],
-  ['memory', 'Kip checks again later', 'The next day and one week later. That is how you know it lasted.'],
+  ['memory', 'Nova checks again later', 'The next day and one week later. That is how you know it lasted.'],
 ];
 
 export function openWelcome({ onDone, onCancel }) {
@@ -69,26 +69,26 @@ export function openWelcome({ onDone, onCancel }) {
       const names = list.map((c) => c.title);
       const langs = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0] || 'code';
       return h('div.welcome-body',
-        svgEl(kipSvg('cheer', data.color)),
+        svgEl(novaSvg('cheer', data.color)),
         h('h1.hero-title', 'Learn to code.', h('br'), 'Make it stick.'),
-        h('p.hero-sub', `Short lessons in ${langs} that adapt to you. Kip, your guide, gives you a nudge when you are stuck, then checks later that it really stuck.`));
+        h('p.hero-sub', `Short lessons in ${langs} that adapt to you. Nova, your guide, gives you a nudge when you are stuck, then checks later that it really stuck.`));
     }
     if (which === 'name') {
       const input = h('input.input', { type: 'text', maxlength: '24', autocomplete: 'off', placeholder: 'A first name or a nickname', value: data.name, 'aria-label': 'Your name', 'data-autofocus': '' });
       input.addEventListener('input', () => { data.name = input.value; });
       input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.repeat) { e.preventDefault(); e.stopPropagation(); setTimeout(() => go(1), 0); } });
-      const preview = h('div', { html: kipSvg('happy', data.color) });
-      const swatches = h('div.swatches', { role: 'group', 'aria-label': 'Colour for Kip' }, Object.entries(KIP_COLORS).map(([id, c]) => h(`button.swatch${id === data.color ? '.is-on' : ''}`, {
+      const preview = h('div', { html: novaSvg('happy', data.color) });
+      const swatches = h('div.swatches', { role: 'group', 'aria-label': 'Colour for Nova' }, Object.entries(NOVA_COLORS).map(([id, c]) => h(`button.swatch${id === data.color ? '.is-on' : ''}`, {
         type: 'button', 'aria-label': c.name, 'aria-pressed': id === data.color ? 'true' : 'false', style: { '--c': c.edge },
         onclick: (e) => {
           data.color = id;
-          preview.innerHTML = kipSvg('happy', id);
+          preview.innerHTML = novaSvg('happy', id);
           for (const b of e.currentTarget.parentElement.children) { b.classList.toggle('is-on', b === e.currentTarget); b.setAttribute('aria-pressed', b === e.currentTarget ? 'true' : 'false'); }
         },
       })));
       return h('div.welcome-body', preview,
-        h('div.field', h('label', { style: { fontSize: '1.3rem', fontWeight: '700' } }, 'What should Kip call you?'), input, h('span.small.muted', 'Your name stays on this device.')),
-        h('div.field', h('label', 'Pick a colour for Kip'), swatches));
+        h('div.field', h('label', { style: { fontSize: '1.3rem', fontWeight: '700' } }, 'What should Nova call you?'), input, h('span.small.muted', 'Your name stays on this device.')),
+        h('div.field', h('label', 'Pick a colour for Nova'), swatches));
     }
     if (which === 'course') {
       return h('div.welcome-body',
@@ -97,7 +97,7 @@ export function openWelcome({ onDone, onCancel }) {
         h('h3', { style: { marginTop: '8px' } }, 'Have you done this before?'),
         h('div.choices',
           choice(!data.knows, () => { data.knows = false; render(); }, 'I am new to this', 'Start with the very first lesson.'),
-          choice(data.knows, () => { data.knows = true; render(); }, 'I know some already', 'Kip asks a few questions and skips what you know.')),
+          choice(data.knows, () => { data.knows = true; render(); }, 'I know some already', 'Nova asks a few questions and skips what you know.')),
         h('p.small.muted', 'You can switch courses any time.'));
     }
     if (which === 'goal') {
@@ -107,12 +107,12 @@ export function openWelcome({ onDone, onCancel }) {
         h('p.small.muted', 'A little every day beats a lot once a week. You can change this later.'));
     }
     return h('div.welcome-body',
-      h('h2', 'How Kip helps you learn'),
+      h('h2', 'How Nova helps you learn'),
       h('div.how', HOW.map(([ic, title, text]) => h('div.how-row', h('div.ic', { html: iconSvg(ic) }), h('div', h('b', title), h('span', text))))),
-      data.study ? h('p.small.muted', 'In this study Kip sets how help is chosen for you. Everything you do here is saved on this device only.') : [
-        h('h3', { style: { marginTop: '6px' } }, 'How should Kip choose the help?'),
+      data.study ? h('p.small.muted', 'In this study Nova sets how help is chosen for you. Everything you do here is saved on this device only.') : [
+        h('h3', { style: { marginTop: '6px' } }, 'How should Nova choose the help?'),
         h('div.choices',
-          choice(data.helpMode === 'adaptive', () => { data.helpMode = 'adaptive'; render(); }, 'Adapt it to me (recommended)', 'Kip tries each kind of help now and then, and learns which one works best for you.'),
+          choice(data.helpMode === 'adaptive', () => { data.helpMode = 'adaptive'; render(); }, 'Adapt it to me (recommended)', 'Nova tries each kind of help now and then, and learns which one works best for you.'),
           choice(data.helpMode === 'fixed', () => { data.helpMode = 'fixed'; render(); }, 'Always the same order', 'A hint, then a more specific hint, then a worked example.')),
         h('p.small.muted', 'Everything you do here is saved on this device only. You can change all of this in Settings.')]);
   }

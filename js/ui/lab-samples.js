@@ -8,13 +8,13 @@ export const LAB_LANGS = [
 
 export const SAMPLES = {
   python: [
-    { name: 'Hello loop', code: ['# Change this code, then press Run', 'name = "Kip"', 'for i in range(3):', '    print(f"Hello, {name}! Round {i + 1}")'] },
+    { name: 'Hello loop', code: ['# Change this code, then press Run', 'name = "Nova"', 'for i in range(3):', '    print(f"Hello, {name}! Round {i + 1}")'] },
     { name: 'Times table', code: ['n = 7', 'for i in range(1, 11):', '    print(f"{n} x {i} = {n * i}")'] },
     { name: 'Shopping total', code: ['prices = [4, 3, 12, 25]', 'total = 0', 'for price in prices:', '    total += price', 'print(f"Items: {len(prices)}")', 'print(f"Total: {total}")'] },
     { name: 'A function', code: ['def area(width, height):', '    return width * height', '', 'print(area(3, 4))', 'print(area(10, 2))'] },
   ],
   javascript: [
-    { name: 'Hello loop', code: ['// Change this code, then press Run', 'const name = "Kip";', 'for (let i = 1; i <= 3; i++) {', '  console.log(`Hello, ${name}! Round ${i}`);', '}'] },
+    { name: 'Hello loop', code: ['// Change this code, then press Run', 'const name = "Nova";', 'for (let i = 1; i <= 3; i++) {', '  console.log(`Hello, ${name}! Round ${i}`);', '}'] },
     { name: 'Times table', code: ['const n = 7;', 'for (let i = 1; i <= 10; i++) {', '  console.log(`${n} x ${i} = ${n * i}`);', '}'] },
     { name: 'Shopping total', code: ['const prices = [4, 3, 12, 25];', 'let total = 0;', 'for (const price of prices) {', '  total += price;', '}', 'console.log(`Items: ${prices.length}`);', 'console.log(`Total: ${total}`);'] },
     { name: 'An object', code: ['const pet = { name: "Bolt", age: 4 };', 'pet.age += 1;', 'console.log(pet);', 'console.log(`${pet.name} is ${pet.age} years old`);'] },

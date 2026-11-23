@@ -347,7 +347,7 @@ export default {
         {
           kind: 'teach',
           title: 'Data as text',
-          text: '**JSON** is a way to write data as plain text. Text can be saved in a file or sent to another computer.\n\n`JSON.stringify()` turns an object or an array into JSON text. In JSON, property names are in double quotes, and there are no spaces.',
+          text: '**JSON** is a way to write data as plain text. Text can be saved in a file or sent to another computer.\n\n`JSON.stringify()` turns an object or an array into JSON text. In JSON, property names and text values are in double quotes. `JSON.stringify()` adds no spaces.',
           code: ['const pet = { name: "Kit", age: 3 };', 'const text = JSON.stringify(pet);', 'console.log(text);'],
           output: '{"name":"Kit","age":3}',
         },
@@ -479,7 +479,7 @@ export default {
           mono: true,
           options: [
             { t: 'JSON.parse(text).coins', ok: true },
-            { t: 'text.coins', why: '`text` is plain text. Plain text has no properties of its own, so this has no value.' },
+            { t: 'text.coins', why: '`text` is plain text. Text has no property called `coins`, so this gives `undefined`.' },
             { t: 'JSON.stringify(text).coins', why: '`stringify` makes text again. Text has no `coins` property.' },
           ],
           explain: '`JSON.parse(text)` builds an object from the text. Then `.coins` reads the property, which is 8.',

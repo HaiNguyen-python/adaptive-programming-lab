@@ -537,9 +537,9 @@ export default {
           output: ['Cooking | 65 | strong', 'Food | 54 | weak', 'Light | 90 | strong', 'Shelter | 240 | strong', 'Tools | 54 | weak'],
           hints: [
             'The label `strong` is for a revenue that reaches 60. The label `weak` is for all the others.',
-            'One blank is the comparison that includes 200 and everything above it. The other word comes before the value for all other groups.',
+            'One blank is the comparison that is true for 60 and for every number above it. The other word comes before the value for all other groups.',
           ],
-          explain: '`SUM(total) >= 60` gives `strong` to the categories that reach 200. `ELSE` gives `weak` to the rest.',
+          explain: '`SUM(total) >= 60` gives `strong` to the categories that reach 60. `ELSE` gives `weak` to the rest.',
         },
         {
           kind: 'spot',

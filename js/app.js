@@ -34,12 +34,12 @@ export function emitChange() { for (const fn of listeners) fn(); }
 
 /** Apply theme, text size and motion settings to the page. */
 export function applyLook() {
-  const s = store.state ? store.state.settings : { theme: 'auto', textSize: 'm', reduceMotion: false };
+  const s = store.state ? store.state.settings : { theme: 'day', textSize: 'm', reduceMotion: false };
   const root = document.documentElement;
   const theme = s.theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: light)').matches ? 'day' : 'night') : s.theme;
   root.dataset.theme = theme;
   root.dataset.size = s.textSize;
   root.dataset.motion = s.reduceMotion ? 'off' : 'on';
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = theme === 'day' ? '#edf4f1' : '#0b2126';
+  if (meta) meta.content = theme === 'day' ? '#f1f6ff' : '#151933';
 }

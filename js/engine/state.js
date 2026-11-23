@@ -2,10 +2,10 @@
  * The learner's saved state. Everything lives on the learner's own device.
  */
 
-export const STATE_VERSION = 1;
+export const STATE_VERSION = 2;
 
 export const DEFAULT_SETTINGS = {
-  theme: 'auto',            // auto | night | day
+  theme: 'day',             // day | night | auto (follows the device)
   sound: true,
   textSize: 'm',            // s | m | l
   reduceMotion: false,
@@ -63,6 +63,8 @@ export function repairState(state) {
   }
   if (!Array.isArray(out.decisions)) out.decisions = [];
   if (!Array.isArray(out.recentItems)) out.recentItems = [];
+  // Version 2 made the bright day theme the default: learners still on the old default move to it once.
+  if ((state.v || 1) < 2 && out.settings.theme === 'auto') out.settings.theme = 'day';
   out.v = STATE_VERSION;
   return out;
 }

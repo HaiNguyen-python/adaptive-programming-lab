@@ -681,7 +681,7 @@ export default {
           options: [
             { t: 'orders.filter((o) => o.cost > 10).map((o) => o.name)', ok: true },
             { t: 'orders.map((o) => o.name).filter((o) => o.cost > 10)', why: 'After `map()`, the items are only names, which are text. They have no `cost` to test.' },
-            { t: 'orders.reduce((o) => o.name)', why: '`reduce()` combines all items into one value, and it needs a start value. It does not pick names.' },
+            { t: 'orders.reduce((o) => o.name)', why: '`reduce()` combines all items into one value. It does not make a list of names.' },
             { t: 'orders.find((o) => o.cost > 10).name', why: '`find()` gives only the first matching order, so you get one name, not all the names.' },
           ],
           explain: '`filter()` first keeps the orders that cost more than 10. Then `map()` takes the names out of those orders.',

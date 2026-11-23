@@ -4,7 +4,7 @@
   "description": "Learn Python, JavaScript, SQL, HTML and CSS in short lessons that adapt to you.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#0b2126",
-  "theme_color": "#0b2126",
+  "background_color": "#f1f6ff",
+  "theme_color": "#f1f6ff",
   "icons": [{ "src": "assets/img/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
 }

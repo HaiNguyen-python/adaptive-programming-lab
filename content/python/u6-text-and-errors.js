@@ -13,7 +13,7 @@ export default {
         {
           kind: 'teach',
           title: 'Tools that belong to text',
-          text: 'A **method** is a tool that belongs to a value. You write the value, a dot, the method name and parentheses.\n\n`upper()` gives the text in capital letters. `lower()` gives it in small letters.\n\nA method gives back a new string. The old string does not change.',
+          text: 'A **method** is a tool that belongs to a value. You write the value, a dot, the method name and parentheses.\n\n`upper()` gives the text in capital letters. `lower()` gives it in small letters.\n\nThese methods give back a new string. The old string does not change.',
           code: ['word = "Hello"', 'print(word.upper())', 'print(word.lower())', 'print(word)'],
           output: ['HELLO', 'hello', 'Hello'],
         },
@@ -105,7 +105,7 @@ export default {
           mustNotUse: [{ re: 'print\\(\\s*["\']THE', msg: 'Build the text from `sentence` with methods, instead of typing the result.' }],
           hints: [
             'You need three methods, one for each change. Each method gives back a new string, so keep the new string in a variable or call the next method on it.',
-            'Start with `sentence.strip()` and store it. Then use `replace()` with two strings, the old part and the new part. Last, `upper()` goes on the string that you print.',
+            'First remove the end spaces and store the result in a new variable. `replace()` needs two strings: the old part and the new part. Make the capitals last, on the string that you print.',
           ],
           explain: '`strip()` removes the end spaces, `replace("cat", "dog")` swaps the word, and `upper()` makes capitals. Each step works on the string from the step before.',
         },
@@ -357,7 +357,7 @@ export default {
         {
           kind: 'teach',
           title: 'Catch the error',
-          text: 'With `try` and `except` you can keep the program running. Python runs the `try` block. If an error of the named type happens, Python jumps to the `except` block. If no error happens, the `except` block is skipped.\n\nAfter that, the program goes on as normal.',
+          text: 'With `try` and `except` you can keep the program running. Python runs the `try` block. If an error of the named type happens, Python skips the rest of the `try` block and jumps to the `except` block. If no error happens, the `except` block is skipped.\n\nAfter that, the program goes on as normal.',
           code: ['total = 12', 'people = 0', 'try:', '    print(total / people)', 'except ZeroDivisionError:', '    print("No people yet")', 'print("Done")'],
           output: ['No people yet', 'Done'],
         },
@@ -663,7 +663,7 @@ export default {
           options: [
             { t: 'So that words such as `Red` and `red` are counted as the same word', ok: true },
             { t: 'So that `split()` is able to cut the text', why: '`split()` cuts at spaces and works the same with capital letters.' },
-            { t: 'So that the counts become bigger', why: 'The counts only depend on how often each word appears. `lower()` changes which words count as equal.' },
+            { t: 'So that the words come out in alphabetical order', why: '`lower()` only changes capital letters to small letters. It does not change the order of the words.' },
           ],
           explain: 'Python treats `Red` and `red` as different strings, so they would get separate keys. Making all the text lowercase gives one key for the word.',
         },

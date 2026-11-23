@@ -59,7 +59,7 @@ export default {
         {
           kind: 'teach',
           title: 'Add to a set and ask with in',
-          text: 'You can write a set with curly brackets. `add()` puts in a value. Adding a value that is already there changes nothing.\n\n`in` asks if a value is in the set and gives `True` or `False`. An empty set is made with `set()`, because `{}` makes an empty dictionary.',
+          text: 'You can write a set with curly brackets. `add()` puts in a value. Adding a value that is already there changes nothing.\n\n`in` asks if a value is in the set and gives `True` or `False`. `not in` asks the opposite question. An empty set is made with `set()`, because `{}` makes an empty dictionary.',
           code: ['seen = {1, 2}', 'seen.add(3)', 'seen.add(2)', 'print(len(seen))', 'print(3 in seen)', 'print(9 in seen)'],
           output: ['3', 'True', 'False'],
         },
@@ -250,7 +250,7 @@ export default {
           output: 'Gus',
           hints: [
             'Read from the outside in. The first pair of brackets picks one dictionary from the list. The second pair picks a value from that dictionary.',
-            'Positions in a list start at 0. The second pair needs the key whose value is the cat\'s name, written as text.',
+            'Positions in a list start at 0, so count carefully to reach the second cat. The second pair needs a key, written as text in quotes.',
           ],
           explain: '`cats[1]` is the second dictionary, because counting starts at 0. Its `"name"` value is `Gus`.',
         },
@@ -340,7 +340,7 @@ export default {
         },
         {
           kind: 'mcq',
-          prompt: 'Which expression reads the second score of Ben?',
+          prompt: 'Which code reads the second score of Ben?',
           code: ['scores = {"Ana": [5, 6], "Ben": [7, 9]}'],
           mono: true,
           options: [
@@ -377,7 +377,7 @@ export default {
         {
           kind: 'teach',
           title: 'Use methods and functions',
-          text: 'The first part can be any expression that uses the loop variable: a method call, a function call, a calculation.',
+          text: 'The first part can be any code that gives a value, usually made from the loop variable: a method call, a function call or a calculation.',
           code: ['words = ["ant", "horse"]', 'print([w.upper() for w in words])', 'print([len(w) for w in words])'],
           output: ["['ANT', 'HORSE']", '[3, 5]'],
         },
@@ -587,7 +587,7 @@ export default {
           kind: 'teach',
           title: 'A function that picks names',
           text: 'Now join the parts. `top_names` takes the list of students and a limit. The first comprehension keeps the students whose average is at least `cut`. The second one takes their names.',
-          code: ['def avg_of(student):', '    total = 0', '    for s in student["scores"]:', '        total += s', '    return total / len(student["scores"])', 'def top_names(kids, cut):', '    good = [s for s in kids if avg_of(s) >= cut]', '    return [s["name"] for s in good]', 'ana = {"name": "Ana", "scores": [80, 90]}', 'ben = {"name": "Ben", "scores": [60, 70, 65]}', 'print(top_names([ana, ben], 70))'],
+          code: ['def avg_of(student):', '    total = 0', '    for s in student["scores"]:', '        total += s', '    return total / len(student["scores"])', 'def top_names(kids, cut):', '    good = [k for k in kids if avg_of(k) >= cut]', '    return [k["name"] for k in good]', 'ana = {"name": "Ana", "scores": [80, 90]}', 'ben = {"name": "Ben", "scores": [60, 70, 65]}', 'print(top_names([ana, ben], 70))'],
           output: "['Ana']",
         },
         {
@@ -635,7 +635,7 @@ export default {
           kind: 'write',
           prompt: 'The function `avg_of` and the list `students` are ready. Write `top_names(kids, cut)`. It returns the names of the students whose average is at least `cut`. Print `top_names(students, 70)`. Your program prints:\n\n`[\'Ana\']`',
           starter: ['def avg_of(student):', '    total = 0', '    for s in student["scores"]:', '        total += s', '    return total / len(student["scores"])', 'students = [', '    {"name": "Ana", "scores": [80, 90]},', '    {"name": "Ben", "scores": [60, 70, 65]},', ']', ''],
-          solution: ['def avg_of(student):', '    total = 0', '    for s in student["scores"]:', '        total += s', '    return total / len(student["scores"])', 'students = [', '    {"name": "Ana", "scores": [80, 90]},', '    {"name": "Ben", "scores": [60, 70, 65]},', ']', 'def top_names(kids, cut):', '    good = [s for s in kids if avg_of(s) >= cut]', '    return [s["name"] for s in good]', 'print(top_names(students, 70))'],
+          solution: ['def avg_of(student):', '    total = 0', '    for s in student["scores"]:', '        total += s', '    return total / len(student["scores"])', 'students = [', '    {"name": "Ana", "scores": [80, 90]},', '    {"name": "Ben", "scores": [60, 70, 65]},', ']', 'def top_names(kids, cut):', '    good = [k for k in kids if avg_of(k) >= cut]', '    return [k["name"] for k in good]', 'print(top_names(students, 70))'],
           expectOutput: "['Ana']",
           checks: [
             { call: 'top_names(students, 60)', equals: "['Ana', 'Ben']" },
@@ -700,7 +700,7 @@ export default {
         },
         {
           kind: 'mcq',
-          prompt: 'A function gets a student dictionary named `s`, with a list under the key `"scores"`. Which expression gives the number of scores?',
+          prompt: 'A function gets a student dictionary named `s`, with a list under the key `"scores"`. Which code gives the number of scores?',
           mono: true,
           options: [
             { t: 'len(s["scores"])', ok: true },

@@ -26,7 +26,7 @@ export function settingsPage(root) {
 
   // ---- look and sound
   page.append(group('Look and sound',
-    row('Theme', 'Night is easy on the eyes. Day is brighter.', segmented([{ value: 'auto', label: 'Auto' }, { value: 'night', label: 'Night' }, { value: 'day', label: 'Day' }], s.theme, (v) => set(() => { s.theme = v; }), 'Theme')),
+    row('Theme', 'Day is bright and colourful. Night is easier on the eyes in the dark.', segmented([{ value: 'day', label: 'Day' }, { value: 'night', label: 'Night' }, { value: 'auto', label: 'Like my device' }], s.theme, (v) => set(() => { s.theme = v; }), 'Theme')),
     row('Text size', '', segmented([{ value: 's', label: 'Small' }, { value: 'm', label: 'Medium' }, { value: 'l', label: 'Large' }], s.textSize, (v) => set(() => { s.textSize = v; }), 'Text size')),
     row('Sounds', 'Short sounds for right and wrong answers.', switchEl(s.sound, (v) => { set(() => { s.sound = v; }); if (v) play('right'); }, 'Sounds')),
     row('Less motion', 'Turn off animations and confetti.', switchEl(s.reduceMotion, (v) => set(() => { s.reduceMotion = v; }), 'Less motion'))));

@@ -131,7 +131,7 @@ export default {
           options: [
             { t: '`NULL`', ok: true },
             { t: '0', why: '0 is a value. Without `ELSE`, a row that matches no test gets no value at all.' },
-            { t: 'The query stops with an error', why: '`ELSE` is optional. The query runs, and rows with no true test get an empty value.' },
+            { t: 'The query stops with an error', why: '`ELSE` is optional. The query runs, and rows with no true test get no value.' },
           ],
           explain: 'Without `ELSE`, the result for a row with no true test is `NULL`.',
         },
@@ -147,7 +147,7 @@ export default {
         },
         {
           kind: 'predict',
-          prompt: 'In the `orders` table, four orders have a `quantity` of 3 or more. What does this query return?',
+          prompt: 'The 14 orders in `orders` have these quantities: 2, 4, 1, 2, 5, 2, 1, 1, 1, 3, 2, 1, 3 and 2. What does this query return?',
           code: ['SELECT', '  SUM(CASE WHEN quantity >= 3', '    THEN 1 ELSE 0 END)', 'FROM orders;'],
           answer: '4',
           options: ['14', '3', '12'],
@@ -199,7 +199,7 @@ export default {
         {
           kind: 'teach',
           title: 'What is not in the list',
-          text: '`NOT IN` keeps the rows whose value is **not** in the list. This finds the products that have never been ordered.\n\nOnly two products have no order: the Trail mix and the Compass.',
+          text: '`NOT IN` keeps the rows whose value is **not** in the list. This finds the products that have never been ordered.\n\nOnly two products have no order: the Trail mix and the Compass.\n\nBe careful: if the list holds a `NULL`, `NOT IN` finds no rows at all. Here `product_id` is never `NULL`, so it works.',
           code: ['SELECT name', 'FROM products', 'WHERE id NOT IN', '  (SELECT product_id FROM orders)', 'ORDER BY name;'],
           result: { columns: ['name'], rows: [['Compass'], ['Trail mix']] },
         },
@@ -223,7 +223,7 @@ export default {
           bugLine: 3,
           fix: 'WHERE id IN (SELECT camper_id',
           expect: ['Aino', 'Yuki'],
-          explain: '`=` compares with one value, but this subquery gives two ids. This database then uses only the first one. `IN` compares with the whole list.',
+          explain: '`=` compares with one value, but this subquery gives two ids. This database then uses only the first one, and many other databases stop with an error. `IN` compares with the whole list.',
         },
         {
           kind: 'order',
@@ -300,7 +300,7 @@ export default {
         },
         {
           kind: 'predict',
-          prompt: 'The Light category has two products: the Lantern (id 3) and the Flashlight (id 4). Three orders are for these two products. What does this query return?',
+          prompt: 'The Light category has two products: the Lantern (id 3) and the Flashlight (id 4). The `product_id` values in `orders` are 3, 7, 1, 2, 8, 7, 4, 5, 6, 11, 8, 3, 8 and 12. What does this query return?',
           code: ['SELECT COUNT(*)', 'FROM orders', 'WHERE product_id IN', '  (SELECT id FROM products', "   WHERE category = 'Light');"],
           answer: '3',
           options: ['2', '12', '14'],
@@ -319,13 +319,13 @@ export default {
         {
           kind: 'teach',
           title: 'Two lists in one',
-          text: '`UNION` stacks the result of one query under the result of another. This is useful when the rows come from different tables.\n\nBoth queries must have the **same number of columns**. Write `ORDER BY` only once, after the last query: it sorts the whole stacked result.',
+          text: '`UNION` stacks the result of one query under the result of another. This is useful when the rows come from different tables. Like `DISTINCT`, `UNION` removes repeated rows.\n\nBoth queries must have the **same number of columns**. Write `ORDER BY` only once, after the last query: it sorts the whole stacked result.',
           code: ['SELECT name FROM campers', "WHERE town = 'Turku'", 'UNION', 'SELECT name FROM products', "WHERE category = 'Tools'", 'ORDER BY name;'],
           result: { columns: ['name'], rows: [['Compass'], ['Kofi'], ['Mateo'], ['Rope'], ['Water bottle']] },
         },
         {
           kind: 'predict',
-          prompt: 'Aino (12) and Noah (9) live in Helsinki, and so does Elsa (58). `UNION` removes repeated rows, just like `DISTINCT`. What does this query return?',
+          prompt: 'Aino (12) and Noah (9) live in Helsinki, and so does Elsa (58). What does this query return?',
           code: ['SELECT town FROM campers', 'WHERE age < 13', 'UNION', 'SELECT town FROM campers', 'WHERE age > 50;'],
           answer: 'Helsinki',
           options: ['Helsinki\nHelsinki', 'Helsinki\nHelsinki\nHelsinki'],
@@ -472,7 +472,7 @@ export default {
         {
           kind: 'teach',
           title: 'The plan',
-          text: 'You will build a report in small steps. For each camper, it shows the number of items they bought, a size label, and only the cheap items.\n\nStep one: join `orders` with `campers`, group by camper and add up the `quantity`. Elsa has no orders, so she is not in the result.',
+          text: 'You will build a report in small steps. For each camper, it shows the number of items they bought and a size label. At the end, it counts only the cheap items.\n\nStep one: join `orders` with `campers`, group by camper and add up the `quantity`. Elsa has no orders, so she is not in the result.',
           code: ['SELECT c.name, SUM(o.quantity) AS items', 'FROM orders AS o', 'JOIN campers AS c', '  ON o.camper_id = c.id', 'GROUP BY c.id, c.name', 'ORDER BY items DESC, c.name;'],
           result: { columns: ['name', 'items'], rows: [['Aino', 9], ['Linh', 9], ['Kofi', 5], ['Mateo', 3], ['Zara', 2], ['Noah', 1], ['Yuki', 1]] },
         },
@@ -609,7 +609,7 @@ export default {
         },
         {
           kind: 'predict',
-          prompt: 'The average stock of all products is a little over 33. Seven products have a smaller stock. What does this query return?',
+          prompt: 'The average stock of all products is a little over 33. The stocks are 5, 12, 30, 40, 8, 15, 100, 80, 0, 25, 50 and 35. What does this query return?',
           code: ['SELECT COUNT(*)', 'FROM products', 'WHERE stock <', '  (SELECT AVG(stock) FROM products);'],
           answer: '7',
           options: ['5', '12', '8'],

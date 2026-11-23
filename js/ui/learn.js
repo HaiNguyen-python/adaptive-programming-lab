@@ -180,7 +180,7 @@ function campBlock(course, unit, unitIndex, firstIndex, width, openId) {
   }
   const svg = `<svg class="path" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">`
     + `<path d="${base}" fill="none" stroke="var(--path)" stroke-width="9" stroke-linecap="round" stroke-dasharray="1 20"/>`
-    + (lit ? `<path d="${lit}" fill="none" stroke="var(--ember)" stroke-width="9" stroke-linecap="round" stroke-dasharray="1 20" opacity=".85"/>` : '')
+    + (lit ? `<path d="${lit}" fill="none" stroke="var(--band)" stroke-width="9" stroke-linecap="round" stroke-dasharray="1 20"/>` : '')
     + '</svg>';
   const trees = h('div.trees');
   if (width >= 380) {
@@ -216,9 +216,12 @@ function campBlock(course, unit, unitIndex, firstIndex, width, openId) {
     else if (ts.next === 'delayed' && ts.due) testBtn = h('button.btn.btn--primary.btn--sm', { type: 'button', html: iconSvg('award'), onclick: () => launchTest(course, unit, 'delayed') }, 'One-week test');
     else if (ts.next === 'delayed') testBtn = h('span.tag', { title: 'The unit test comes back one week after you took it' }, `One-week test ${relDay(daysBetween(now(), ts.dueAt))}`);
   }
-  return h('section.camp', { 'aria-label': `Unit ${unitIndex + 1}: ${unit.title}` },
-    h('div.camp-head', svgEl(campSvg(doneCount > 0)),
-      h('div.grow', h('div.camp-num', `Unit ${unitIndex + 1}`), h('h2', unit.title), h('div.small.muted', unit.blurb), testBtn ? h('div', { style: { marginTop: '8px' } }, testBtn) : null),
+  const pct = Math.round((doneCount / n) * 100);
+  return h('section.camp', { 'aria-label': `Unit ${unitIndex + 1}: ${unit.title}`, 'data-band': String(unitIndex % 5) },
+    h('div.camp-head', h('div.camp-badge', svgEl(campSvg(doneCount > 0))),
+      h('div.grow', h('div.camp-num', `Unit ${unitIndex + 1}`), h('h2', unit.title), h('div.camp-blurb', unit.blurb),
+        h('div.camp-meter', { role: 'img', 'aria-label': `${doneCount} of ${n} lessons done` }, h('span', { style: { width: `${pct}%` } })),
+        testBtn ? h('div', { style: { marginTop: '10px' } }, testBtn) : null),
       h('div.camp-count', `${doneCount}/${n}`)),
     h('div.camp-path', { style: { '--h': `${height}px` }, html: svg }, trees, nodes));
 }
@@ -236,9 +239,19 @@ function todayCard(course) {
   const action = next
     ? h('button.btn.btn--primary', { type: 'button', onclick: () => launchLesson(course, next) }, today || state.xp ? 'Continue' : 'Start learning')
     : h('button.btn.btn--primary', { type: 'button', onclick: () => certificate(course), html: iconSvg('award') }, 'See your certificate');
-  return h('div.card.today',
-    ringEl(today, goal, String(today), `of ${goal} XP`),
-    h('div.stack', h('div', h('h3', next ? next.title : `${course.title} complete!`), h('div.small.muted', lines[0])), h('div', action)));
+  const hr = new Date(now()).getHours();
+  const hello = hr < 5 ? 'Up late' : hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
+  const name = (state.profile.name || '').trim().split(/\s+/)[0];
+  const mood = today >= goal ? 'cheer' : today > 0 ? 'proud' : 'happy';
+  return h('div.hero',
+    h('div.hero-sky', { 'aria-hidden': 'true' }, h('span.hero-sun'), h('span.hero-cloud.c1'), h('span.hero-cloud.c2'), h('span.hero-hill.h1'), h('span.hero-hill.h2')),
+    h('div.hero-nova', { 'aria-hidden': 'true', html: novaSvg(mood, state.profile.color) }),
+    h('div.hero-body',
+      h('div.hero-hello', name ? `${hello}, ${name}!` : `${hello}!`),
+      h('h2.hero-title', next ? next.title : `${course.title} complete!`),
+      h('div.hero-line', lines[0]),
+      h('div.hero-actions', action)),
+    h('div.hero-ring', ringEl(today, goal, String(today), `of ${goal} XP`)));
 }
 
 function memoryCard(due) {

@@ -1,17 +1,17 @@
 <!doctype html>
-<html lang="en" data-theme="night">
+<html lang="en" data-theme="day">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>PhD Programming Lab: learn to code and make it stick</title>
   <meta name="description" content="Learn Python, JavaScript, SQL, HTML and CSS in short lessons that adapt to you. Try first, get a nudge when you need it, and prove a day and a week later that it stuck.">
-  <meta name="theme-color" content="#0B2126">
+  <meta name="theme-color" content="#f1f6ff">
   <link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
-  <!-- Fonts: Lexend (reading ease) and JetBrains Mono (clear code). The app works without them. -->
+  <!-- Fonts: Bricolage Grotesque (headings), Lexend (reading ease) and JetBrains Mono (code). The app works without them. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Lexend:wght@300;400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500;700&family=Lexend:wght@300;400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="css/app.css">
   <script>
     // Set the theme before the first paint to avoid a flash.
@@ -19,7 +19,8 @@
       try {
         var p = JSON.parse(localStorage.getItem('hcl.profiles') || 'null');
         var s = p && p.active ? JSON.parse(localStorage.getItem('hcl.state.' + p.active) || 'null') : null;
-        var t = (s && s.settings && s.settings.theme) || 'auto';
+        var t = (s && s.settings && s.settings.theme) || 'day';
+        if (t === 'auto' && (!s || !s.v || s.v < 2)) t = 'day';
         if (t === 'auto') t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'day' : 'night';
         document.documentElement.dataset.theme = t;
         if (s && s.settings && s.settings.textSize) document.documentElement.dataset.size = s.settings.textSize;

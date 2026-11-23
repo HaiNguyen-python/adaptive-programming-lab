@@ -218,11 +218,11 @@ export default {
         },
         {
           kind: 'spot',
-          prompt: 'A screen reader cannot tell what the box is for, because the label is not connected to it. Tap the line with the bug.',
-          code: ['<label for="nick">Nickname</label>', '<input type="text" id="name">'],
+          prompt: 'A screen reader cannot tell what the box is for, because the label `for` value has a typo. Tap the line with the bug.',
+          code: ['<label for="nicname">Nickname</label>', '<input type="text" id="nickname">'],
           bugLine: 1,
-          fix: '<label for="name">Nickname</label>',
-          explain: 'The `for` value must be the same as the `id` of the box. The box has the id `name`, so the label must use `for="name"`.',
+          fix: '<label for="nickname">Nickname</label>',
+          explain: 'The `for` value must be exactly the same as the `id` of the box. The box has the id `nickname`, so the label must use `for="nickname"`.',
         },
         {
           kind: 'teach',
@@ -292,7 +292,7 @@ export default {
           kind: 'mcq',
           prompt: 'What does a screen reader do with the `alt` text of an image?',
           options: [
-            { t: 'It reads the text aloud instead of showing the picture.', ok: true },
+            { t: 'It reads the text aloud to describe the picture.', ok: true },
             { t: 'It makes the picture bigger.', why: 'The `alt` text does not change the size of the picture.' },
             { t: 'It turns the picture into a link.', why: 'Links use `<a>`. Alt text only describes the picture.' },
           ],
@@ -426,7 +426,7 @@ export default {
           bank: ['padding', 'margin', 'gap', 'spacing'],
           hints: [
             'You need a property from the box model that adds space between the content and the border.',
-            'It is the part of the box that sits between the content and the border. It has the same name as the lesson on boxes.',
+            'It starts with the letter p. It is not `margin`, which adds space outside the border.',
           ],
           explain: '`padding` adds space inside a cell, between its text and its border.',
         },
@@ -526,7 +526,7 @@ export default {
         },
         {
           kind: 'mcq',
-          prompt: 'Where does the picture and the schedule of the camp belong?',
+          prompt: 'Where do the picture and the schedule of the camp belong?',
           mono: true,
           options: [
             { t: 'Inside <main>', ok: true },
@@ -665,7 +665,7 @@ export default {
           code: ['<main>', '  <img src="assets/img/campfire.svg" alt>', '</main>'],
           bugLine: 2,
           fix: '  <img src="assets/img/campfire.svg" alt="A campfire">',
-          explain: 'An `alt` attribute needs a value that describes the picture. An empty one gives a reader nothing to say.',
+          explain: 'This picture shows something useful, so `alt` needs a value that describes it. An empty `alt` tells a screen reader to skip the picture, which is only right for pictures that are just decoration.',
         },
         {
           kind: 'mcq',

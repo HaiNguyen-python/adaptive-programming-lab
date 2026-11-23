@@ -192,7 +192,7 @@ export default {
         {
           kind: 'teach',
           title: 'A sorted copy',
-          text: '**Sorting** puts items in order. `sorted()` gives back a new list, from the smallest to the largest. Text is put in alphabetical order.\n\nThe original list does not change.',
+          text: '**Sorting** puts items in order. `sorted()` gives back a new list, from the smallest to the largest. Text is put in alphabetical order, but capital letters come before small letters.\n\nThe original list does not change.',
           code: ['nums = [5, 2, 9]', 'print(sorted(nums))', 'print(nums)'],
           output: ['[2, 5, 9]', '[5, 2, 9]'],
         },
@@ -218,7 +218,7 @@ export default {
           options: [
             { t: 'None', ok: true },
             { t: '[1, 2, 3]', why: 'The list is sorted, but `print()` shows what the call gives back, not the list.' },
-            { t: '[3, 1, 2]', why: 'The call does sort the list. The problem is not that the list stays the same.' },
+            { t: '[3, 1, 2]', why: '`print()` here does not show the list at all. It shows what the call gives back, and `sort()` does change the list.' },
           ],
           explain: '`sort()` changes the list and gives back `None`, a value that means "nothing". The sorted list is in `nums`, not in the result of the call.',
         },
@@ -502,7 +502,7 @@ export default {
           ],
           hints: [
             'Think of the sum for `n` as `n` plus the sum for a smaller number. Do not forget the base case, so the calls stop.',
-            'The base case is an `if` that returns 0. The last line returns `n` plus a call to the same function with `n - 1`.',
+            'The base case is an `if` that checks `n` and returns 0. After it, return `n` plus the sum for one number smaller. Which call to your own function gives that sum?',
           ],
           explain: '`add_up(4)` is `4 + add_up(3)`, and so on down to `add_up(0)`, which returns 0. The total is 4 + 3 + 2 + 1 + 0, which is 10.',
         },
@@ -612,7 +612,7 @@ export default {
           kind: 'teach',
           title: 'Print to look inside',
           text: 'Some bugs give no error. The program runs, but the answer is wrong. Then add `print()` lines to look at the values inside, one step at a time.\n\nHere the result should be 5, the average of 4 and 6, but the print shows 7.0. Now you know the bug is in the line that makes `result`: the division happens before the addition.',
-          code: ['def average(a, b):', '    result = a + b / 2', '    print("result:", result)', '    return result', '', 'print(average(4, 6))'],
+          code: ['def average(a, b):', '    result = a + b / 2', '    print(f"result: {result}")', '    return result', '', 'print(average(4, 6))'],
           output: ['result: 7.0', '7.0'],
         },
         {
@@ -675,7 +675,7 @@ export default {
           mustUse: [{ re: 'def\\s+smallest\\s*\\(', msg: 'Define a function called `smallest` with `def`.' }],
           hints: [
             'Use the pattern from the "sort by hand" idea: keep the best so far, and replace it when an item is smaller. A start value of 0 would fail for negative numbers.',
-            'Start `best` as `nums[0]`. Loop over the numbers, and change `best` when `n < best`. Return `best` after the loop, not inside it.',
+            'Give the best so far the value of the first item of the list. In the loop, compare each number with it and keep the smaller one. Return after the loop, not inside it.',
           ],
           explain: 'Starting with the first item works for any numbers, including negative ones. The loop replaces `best` each time it sees something smaller.',
         },

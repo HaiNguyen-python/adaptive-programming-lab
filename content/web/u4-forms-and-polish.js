@@ -46,7 +46,7 @@ export default {
           bank: ['number', 'numeric', 'digits', 'age'],
           hints: [
             'The `type` value names the kind of information the box accepts.',
-            'The word you need is also a name for the numbers you count with, written in English.',
+            'The word you need is the plain English word for things like 7 or 42, in its singular form.',
           ],
           explain: '`type="number"` makes a box that accepts only numbers.',
         },
@@ -70,11 +70,11 @@ export default {
         },
         {
           kind: 'spot',
-          prompt: 'Choosing `Calm` should clear `Happy`, but both can be chosen at the same time. Tap the line with the bug.',
-          code: ['<input type="radio" name="mood" id="happy">', '<label for="happy">Happy</label>', '<input type="radio" name="moods" id="calm">', '<label for="calm">Calm</label>'],
+          prompt: 'Only one mood should be chosen at a time, but `Calm` can be chosen together with another mood. Tap the line with the bug.',
+          code: ['<input type="radio" name="mood" id="happy">', '<label for="happy">Happy</label>', '<input type="radio" name="moods" id="calm">', '<label for="calm">Calm</label>', '<input type="radio" name="mood" id="sleepy">', '<label for="sleepy">Sleepy</label>'],
           bugLine: 3,
           fix: '<input type="radio" name="mood" id="calm">',
-          explain: 'The names are `mood` and `moods`, so the browser sees two groups. Both buttons need exactly the same `name`.',
+          explain: 'Two buttons use `mood` and one uses `moods`, so the browser sees two groups. All three buttons need exactly the same `name`.',
         },
         {
           kind: 'teach',
@@ -119,7 +119,7 @@ export default {
         steps: [
           { label: 'Start the form', text: 'The label and the number box are connected by `for` and `id`.', code: ['<form>', '  <label for="slices">Slices</label>', '  <input type="number" id="slices">', '</form>'] },
           { label: 'Add the radio group', text: 'Both radio buttons use the same `name`, but each has its own `id`.', code: ['<input type="radio" name="crust" id="thin">', '<label for="thin">Thin</label>'] },
-          { label: 'Add the second choice and the button', text: 'The second radio button repeats `name="crust"`. The submit button closes the form.', code: ['<input type="radio" name="crust" id="thick">', '<button type="submit">Order</button>'] },
+          { label: 'Add the second choice and the button', text: 'The second radio button repeats `name="crust"`. The submit button comes last, just before `</form>`.', code: ['<input type="radio" name="crust" id="thick">', '<label for="thick">Thick</label>', '<button type="submit">Order</button>'] },
         ],
         code: ['<form>', '  <label for="slices">Slices</label>', '  <input type="number" id="slices">', '  <input type="radio" name="crust" id="thin">', '  <label for="thin">Thin</label>', '  <input type="radio" name="crust" id="thick">', '  <label for="thick">Thick</label>', '  <button type="submit">Order</button>', '</form>'],
       },
@@ -428,7 +428,7 @@ export default {
           bank: ['0.4s', '0.4', '4 sec', 'fast'],
           hints: [
             'The time needs a number and a unit for seconds.',
-            'Four tenths is written `0.4`. The unit for seconds is a single letter.',
+            'Write four tenths as a decimal number. The unit for seconds is a single letter, with no space before it.',
           ],
           explain: 'A time is a number followed by `s`, so four tenths of a second is `0.4s`.',
         },
@@ -480,7 +480,7 @@ export default {
           options: [
             { t: 'It makes a change happen gradually instead of at once.', ok: true },
             { t: 'It decides which element the pointer is over.', why: 'That is the job of `:hover`. A transition only controls how fast a change happens.' },
-            { t: 'It moves the element to a new page.', why: 'A transition does not move anyone anywhere. It only smooths a style change.' },
+            { t: 'It moves the element to a new page.', why: 'A transition does not load a new page. It only smooths a style change.' },
           ],
           explain: 'A transition spreads a style change over some time, so it looks smooth.',
         },
@@ -658,10 +658,10 @@ export default {
         {
           kind: 'fill',
           prompt: 'Complete the code so the label is connected to the box.',
-          code: ['<label for="___">Phone</label>', '<input type="number" id="phone">'],
-          blanks: ['phone'],
-          bank: ['phone', 'number', 'Phone', 'label'],
-          explain: 'The label `for` value must match the `id` of the box exactly: `phone`.',
+          code: ['<label for="___">Seats</label>', '<input type="number" id="seats">'],
+          blanks: ['seats'],
+          bank: ['seats', 'number', 'Seats', 'label'],
+          explain: 'The label `for` value must match the `id` of the box exactly: `seats`.',
         },
         {
           kind: 'fill',

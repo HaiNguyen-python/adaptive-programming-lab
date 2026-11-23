@@ -32,7 +32,11 @@ async function authCall(path, body) {
     method: 'POST', headers: { apikey: RESEARCH_DB.key, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
   });
   const j = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(j.msg || j.error_description || j.message || `HTTP ${res.status}`);
+  if (!res.ok) {
+    const err = new Error(j.msg || j.error_description || j.message || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
   return j;
 }
 
@@ -40,7 +44,10 @@ async function token() {
   let s = loadSession();
   if (!s) return null;
   if (Date.now() > s.expires - 60000) {
-    try { s = { ...fromAuth(await authCall('token?grant_type=refresh_token', { refresh_token: s.refresh })), email: s.email }; saveSession(s); } catch { saveSession(null); return null; }
+    try { s = { ...fromAuth(await authCall('token?grant_type=refresh_token', { refresh_token: s.refresh })), email: s.email }; saveSession(s); } catch (e) {
+      if (e && (e.status === 400 || e.status === 401)) { saveSession(null); return null; }
+      throw new Error('Could not reach the research database. Check the connection and try again.');
+    }
   }
   return s.access;
 }

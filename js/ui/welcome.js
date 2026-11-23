@@ -49,13 +49,13 @@ export function openWelcome({ onDone, onCancel }) {
       if (!s.pid) {
         // Without a participant code the data could not be linked to the participant, so nobody is enrolled.
         return h('div.welcome-body',
-          h('h2', STUDY_INFO.title),
+          h('h1.step-title', STUDY_INFO.title),
           md(`This link is for the study **${s.id}**, but it has no participant code, so you cannot be enrolled with it. Ask the researcher for your personal link, or use the app without taking part.`),
           h('button.btn.btn--ghost', { type: 'button', onclick: () => { declineStudy(); render(); } }, 'Use the app without taking part'));
       }
       const box = h('input', { type: 'checkbox', id: 'consent-box', checked: data.agreed, onchange: () => { data.agreed = box.checked; render(); } });
       return h('div.welcome-body',
-        h('h2', STUDY_INFO.title),
+        h('h1.step-title', STUDY_INFO.title),
         md(`This app is used in the study **${s.id}**. Your code is **${s.pid || 'not set'}**. It is used instead of your name.`),
         md('**What is recorded:** your answers, when you ask for help and which kind, the confidence you rate, what you write when you explain a hint, and your results on later memory checks.'),
         s.upload !== false
@@ -94,7 +94,7 @@ export function openWelcome({ onDone, onCancel }) {
     }
     if (which === 'course') {
       return h('div.welcome-body',
-        h('h2', 'What do you want to learn first?'),
+        h('h1.step-title', 'What do you want to learn first?'),
         h('div.choices', list.map((c) => choice(c.id === data.course, () => { data.course = c.id; render(); }, c.title, c.tagline, h('span.glyph', { 'data-accent': c.accent, style: { background: 'var(--accent)', color: 'var(--accent-ink)' } }, c.glyph)))),
         h('h3', { style: { marginTop: '8px' } }, 'Have you done this before?'),
         h('div.choices',
@@ -104,14 +104,16 @@ export function openWelcome({ onDone, onCancel }) {
     }
     if (which === 'goal') {
       return h('div.welcome-body',
-        h('h2', 'How much do you want to learn each day?'),
+        h('h1.step-title', 'How much do you want to learn each day?'),
         h('div.choices', GOALS.map((g) => choice(g.xp === data.goal, () => { data.goal = g.xp; render(); }, g.label, `${g.xp} XP, ${g.note}`, h('span', { html: iconSvg('target', 'ic') })))),
         h('p.small.muted', 'A little every day beats a lot once a week. You can change this later.'));
     }
     return h('div.welcome-body',
-      h('h2', 'How Nova helps you learn'),
+      h('h1.step-title', 'How Nova helps you learn'),
       h('div.how', HOW.map(([ic, title, text]) => h('div.how-row', h('div.ic', { html: iconSvg(ic) }), h('div', h('b', title), h('span', text))))),
-      data.study ? h('p.small.muted', 'In this study Nova sets how help is chosen for you. Everything you do here is saved on this device only.') : [
+      data.study ? h('p.small.muted', data.study.upload !== false
+        ? 'In this study Nova sets how help is chosen for you. What you do is saved on this device and sent to the research database under your code, as you agreed.'
+        : 'In this study Nova sets how help is chosen for you. Everything you do here is saved on this device only.') : [
         h('h3', { style: { marginTop: '6px' } }, 'How should Nova choose the help?'),
         h('div.choices',
           choice(data.helpMode === 'adaptive', () => { data.helpMode = 'adaptive'; render(); }, 'Adapt it to me (recommended)', 'Nova tries each kind of help now and then, and learns which one works best for you.'),

@@ -83,7 +83,7 @@ function testsCard(state) {
   }
   if (!rows.length) return null;
   const cell = (x) => h('td.is-num', x === null ? '–' : pct(x));
-  return h('div.card.stack.span-2', h('h3', 'Unit tests'),
+  return h('div.card.stack.span-2', h('h2.h3', 'Unit tests'),
     h('div.result-wrap', h('table.result-table',
       h('thead', h('tr', h('th', 'Unit'), h('th', 'Before'), h('th', 'After'), h('th', 'One week later'))),
       h('tbody', rows.map(({ course, unit, g }) => h('tr', h('td', { style: { fontFamily: 'var(--font-ui)' } }, `${course.title}: ${unit.title}`), cell(g.pre), cell(g.post), cell(g.delayed)))))),
@@ -101,7 +101,7 @@ function lastingCard(state) {
     ? `You kept **${pct(w1 / wn)}** of what Nova checked a week or more later. These checks have no help, so the number shows what you can really do.`
     : 'Getting a question right in a lesson is the easy part. The real test is whether you can still do it **a week later, without help**. Your first result appears here when a lesson is a week old.';
   return h('div.card.stack',
-    h('h3', 'Does it last?'),
+    h('h2.h3', 'Does it last?'),
     meterRow('Right after learning', ...count(sameDay), 'no checks yet'),
     meterRow('The next day', ...count(nextDay), 'no checks yet'),
     meterRow('One week later or more', w1, wn, 'no checks yet'),
@@ -110,7 +110,7 @@ function lastingCard(state) {
 
 function calibrationCard(state) {
   const cal = calibration(allChecks(state));
-  const card = h('div.card.stack', h('h3', 'How well do you judge yourself?'));
+  const card = h('div.card.stack', h('h2.h3', 'How well do you judge yourself?'));
   if (!cal.n) {
     card.append(h('div.empty', { html: confFaceSvg(3) }, h('p', 'Before each solo check, Nova asks how sure you are. After a few checks, you will see here how well your feeling matches your results.')));
     return card;
@@ -141,7 +141,7 @@ function calibrationCard(state) {
 function helpCard(state) {
   const table = helpOutcomes(state.decisions);
   const used = ARMS.reduce((n, a) => n + table[a].used, 0);
-  const card = h('div.card.stack', h('h3', 'Help that works for you'));
+  const card = h('div.card.stack', h('h2.h3', 'Help that works for you'));
   if (!used) {
     card.append(h('div.empty', { html: iconSvg('bulb') }, h('p', 'When you get stuck after a first try, Nova can help. Here you will see which kind of help leads to you solving the next question on your own.')));
     return card;
@@ -174,7 +174,7 @@ function activityCard(state) {
     title: `${new Date(d).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' })}: ${values[i]} XP`,
   }));
   const active = values.filter((v) => v > 0).length;
-  return h('div.card.stack', h('h3', 'Your last 14 days'),
+  return h('div.card.stack', h('h2.h3', 'Your last 14 days'),
     h('div', { html: columns({ bars, max, ticks: [0, max / 2, max], goal, label: `XP per day for the last 14 days. Active on ${active} days. Today: ${values[13]} XP.` }) }),
     md(active ? `You learned on **${plural(active, 'day')}** out of the last 14. Short and often beats long and rare.` : 'Your daily XP will show up here.', 'small.muted'));
 }
@@ -185,7 +185,7 @@ function skillsCard(state, course) {
   if (!done.length) return null;
   const p = courseProgress(state, course);
   return h('div.card.stack.span-2', { 'data-accent': course.accent },
-    h('div.row', h('span.glyph', course.glyph), h('div.grow', h('h3', course.title), h('div.small.muted', `${p.done} of ${p.total} lessons`)), h('div', { style: { width: '120px' } }, bar(p.ratio, 'bar--thin'))),
+    h('div.row', h('span.glyph', course.glyph), h('div.grow', h('h2.h3', course.title), h('div.small.muted', `${p.done} of ${p.total} lessons`)), h('div', { style: { width: '120px' } }, bar(p.ratio, 'bar--thin'))),
     h('div', done.map((l) => {
       const c = state.concepts[l.id];
       const due = isDue(c, t);

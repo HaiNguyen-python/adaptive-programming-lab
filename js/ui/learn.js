@@ -73,6 +73,21 @@ export function dueCount() {
 
 // ---------------------------------------------------------------- sheets
 
+/**
+ * Why a finished lesson cannot be practised or looked up right now: its memory check is due ('memory'), or the
+ * one-week test of its unit is due ('unit-test'). Both are unaided measures, so they come first. Otherwise null.
+ */
+export function lockedFor(state, lesson) {
+  if (isDue(state.concepts[lesson.id], now())) return 'memory';
+  if (testsOn(state) && dueDelayedTests(state, catalog.courses(), now()).some(({ unit }) => unit.id === lesson.unitId)) return 'unit-test';
+  return null;
+}
+
+/** Lesson ids that lockedFor() would lock (for the practice session). */
+export function lockedLessonIds(state) {
+  return catalog.allLessonIds().filter((id) => { const l = catalog.findLesson(id); return l && lockedFor(state, l); });
+}
+
 function lessonSheet(course, lesson) {
   const state = store.state;
   const status = lessonStatus(state, course, lesson);
@@ -95,10 +110,20 @@ function lessonSheet(course, lesson) {
     const prev = course.lessons[lesson.index - 1];
     body.append(h('div.callout', md(`Finish **${prev.title}** to open this lesson.`)));
   }
-  const foot = status === 'locked'
-    ? [h('button.btn.btn--primary', { type: 'button', onclick: () => sheet.close() }, 'OK')]
-    : [h('button.btn.btn--primary', { type: 'button', onclick: () => { sheet.close(); launchLesson(course, lesson); } }, status === 'done' ? 'Practise again' : 'Start lesson')];
-  if (status === 'done') foot.unshift(h('button.btn.btn--ghost', { type: 'button', onclick: () => { sheet.close(); notesSheet(course, lesson); } }, 'Read the notes'));
+  const lock = status === 'done' ? lockedFor(state, lesson) : null;
+  const unitOf = course.units.find((u) => u.id === lesson.unitId);
+  let foot;
+  if (status === 'locked') foot = [h('button.btn.btn--primary', { type: 'button', onclick: () => sheet.close() }, 'OK')];
+  else if (lock === 'memory') {
+    body.append(h('div.callout', md('Take the **memory check** for this lesson first, from memory. Practice and notes open again right after.')));
+    foot = [h('button.btn.btn--primary', { type: 'button', onclick: () => { sheet.close(); launchReview(); } }, 'Take the memory check')];
+  } else if (lock === 'unit-test') {
+    body.append(h('div.callout', md('The **one-week test** for this unit is ready. Take it first, from memory. Practice and notes open again right after.')));
+    foot = [h('button.btn.btn--primary', { type: 'button', onclick: () => { sheet.close(); launchTest(course, unitOf, 'delayed'); } }, 'Take the one-week test')];
+  } else {
+    foot = [h('button.btn.btn--primary', { type: 'button', onclick: () => { sheet.close(); launchLesson(course, lesson); } }, status === 'done' ? 'Practise again' : 'Start lesson')];
+    if (status === 'done') foot.unshift(h('button.btn.btn--ghost', { type: 'button', onclick: () => { sheet.close(); notesSheet(course, lesson); } }, 'Read the notes'));
+  }
   const sheet = openSheet({ title: lesson.title, body, foot });
 }
 
@@ -108,14 +133,19 @@ function lessonSheet(course, lesson) {
  */
 export function notesSheet(course, lesson) {
   const state = store.state;
-  const concept = state.concepts[lesson.id];
-  const due = isDue(concept, now());
-  log('notes_opened', { lessonId: lesson.id, course: course.id, shown: !due });
-  if (due) {
+  const lock = lockedFor(state, lesson);
+  log('notes_opened', { lessonId: lesson.id, course: course.id, shown: !lock, lock: lock || undefined });
+  if (lock) {
+    const unitOf = course.units.find((u) => u.id === lesson.unitId);
     const sheet = openSheet({
       title: `Notes: ${lesson.title}`,
-      body: h('div.stack', md('A **memory check** for this lesson is ready. Take it first, from memory: that is what makes it stick. The notes open again right after.')),
-      foot: [h('button.btn.btn--ghost', { type: 'button', onclick: () => sheet.close() }, 'Later'), h('button.btn.btn--primary', { type: 'button', onclick: () => { sheet.close(); launchReview(); } }, 'Take the memory check')],
+      body: h('div.stack', md(lock === 'memory'
+        ? 'A **memory check** for this lesson is ready. Take it first, from memory: that is what makes it stick. The notes open again right after.'
+        : 'The **one-week test** for this unit is ready. Take it first, from memory. The notes open again right after.')),
+      foot: [h('button.btn.btn--ghost', { type: 'button', onclick: () => sheet.close() }, 'Later'),
+        lock === 'memory'
+          ? h('button.btn.btn--primary', { type: 'button', onclick: () => { sheet.close(); launchReview(); } }, 'Take the memory check')
+          : h('button.btn.btn--primary', { type: 'button', onclick: () => { sheet.close(); launchTest(course, unitOf, 'delayed'); } }, 'Take the one-week test')],
     });
     return;
   }
@@ -306,7 +336,7 @@ function nextPanel(course) {
 
 function noticeRow({ icon, title, text, action, onclick, tone = 'memory' }) {
   return h(`div.notice.notice--${tone}`, icon,
-    h('div.grow', h('h3', title), h('p', text)),
+    h('div.grow', h('h2.notice-title', title), h('p', text)),
     h('button.btn.btn--sm', { type: 'button', onclick }, action));
 }
 
@@ -317,7 +347,7 @@ function quickFireRow(course) {
   const best = (state.quickfire && state.quickfire[course.id]) || 0;
   if (pool.length < 4) {
     return h('div.notice.notice--fire.is-locked', h('span.notice-ic', { html: iconSvg('bolt') }),
-      h('div.grow', h('h3', 'Quick fire'), h('p', 'Finish two lessons to unlock a 60-second round of "what does this print?"')));
+      h('div.grow', h('h2.notice-title', 'Quick fire'), h('p', 'Finish two lessons to unlock a 60-second round of "what does this print?"')));
   }
   return noticeRow({
     icon: h('span.notice-ic', { html: iconSvg('bolt') }),

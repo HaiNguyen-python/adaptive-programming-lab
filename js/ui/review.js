@@ -8,7 +8,7 @@ import { dueConcepts, daysBetween, flames } from '../engine/mastery.js';
 import { startPractice } from '../engine/tutor.js';
 import { flamesEl } from './common.js';
 import { openPlayer } from './player.js';
-import { launchReview, launchTest, testsOn } from './learn.js';
+import { launchReview, launchTest, testsOn, lockedLessonIds } from './learn.js';
 import { dueDelayedTests } from '../engine/unit-tests.js';
 
 export function reviewPage(root) {
@@ -25,23 +25,23 @@ export function reviewPage(root) {
   if (testsOn(state)) {
     for (const { course, unit } of dueDelayedTests(state, catalog.courses(), t)) {
       page.append(h('div.card.memory-card', { style: { marginBottom: '14px' } }, svgEl(lanternSvg(true)),
-        h('div.grow', h('h3', `One-week unit test: ${unit.title}`), h('div.small.muted', `${course.title}. One question per lesson, no help. It shows what stayed with you.`)),
+        h('div.grow', h('h2.h3', `One-week unit test: ${unit.title}`), h('div.small.muted', `${course.title}. One question per lesson, no help. It shows what stayed with you.`)),
         h('button.btn.btn--primary', { type: 'button', onclick: () => launchTest(course, unit, 'delayed') }, 'Start')));
     }
   }
 
   if (due.length) {
     page.append(h('div.card.memory-card', svgEl(lanternSvg(true)),
-      h('div.grow', h('h3', `${plural(due.length, 'idea')} ready to check`),
+      h('div.grow', h('h2.h3', `${plural(due.length, 'idea')} ready to check`),
         h('div.small.muted', due.length > 8 ? 'Nova checks up to 8 at a time. Each one is a single question, without help.' : 'One question each, without help. It takes a few minutes.')),
       h('button.btn.btn--primary', { type: 'button', onclick: launchReview }, 'Start')));
   } else if (!learned.length) {
-    page.append(h('div.card.empty', nova('happy', state.profile.color), h('h3', 'Nothing to check yet'),
+    page.append(h('div.card.empty', nova('happy', state.profile.color), h('h2.h3', 'Nothing to check yet'),
       h('p', 'Finish a lesson, and Nova will check it here the next day and one week later.'),
       h('a.btn.btn--primary', { href: '#/learn' }, 'Go to the lessons')));
   } else {
     const first = upcoming[0];
-    page.append(h('div.card.empty', nova('proud', state.profile.color), h('h3', 'All caught up'),
+    page.append(h('div.card.empty', nova('proud', state.profile.color), h('h2.h3', 'All caught up'),
       h('p', first ? `Your next memory check is ${relDay(first.days)}.` : 'Every idea you have learned is fresh.')));
   }
 
@@ -55,9 +55,9 @@ export function reviewPage(root) {
   }
 
   if (learned.length) {
-    page.append(h('div.card.row', h('div.grow', h('h3', 'Practise your weakest ideas'), h('div.small.muted', 'Extra questions on the ideas that have faded most. This does not change when your memory checks are due.')),
+    page.append(h('div.card.row', h('div.grow', h('h2.h3', 'Practise your weakest ideas'), h('div.small.muted', 'Extra questions on the ideas that have faded most. This does not change when your memory checks are due.')),
       h('button.btn.btn--ghost', { type: 'button', onclick: () => {
-        const session = startPractice({ state, lessonIds: ids, now: now(), log });
+        const session = startPractice({ state, lessonIds: ids, now: now(), log, exclude: lockedLessonIds(state) });
         openPlayer({ session, course: null });
       } }, 'Practise')));
   }

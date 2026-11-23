@@ -110,10 +110,14 @@ export function participantStatus(exportsList, now = Date.now()) {
       preTest: test('pre'),
       postTest: test('post'),
       delayedTest: test('delayed'),
-      notesOpened: events.filter((e) => e.type === 'notes_opened').length,
+      notesOpened: events.filter((e) => e.type === 'notes_opened' && e.shown !== false).length,
       flags: flags.join('; '),
     };
-  }).sort((a, b) => String(a.pid).localeCompare(String(b.pid), undefined, { numeric: true }));
+  }).sort((a, b) => String(a.pid).localeCompare(String(b.pid), undefined, { numeric: true }))
+    .map((r, _, all) => {
+      const twins = r.pid ? all.filter((x) => x.pid === r.pid).length : 1;
+      return twins > 1 ? { ...r, flags: [r.flags, `code used on ${twins} devices`].filter(Boolean).join('; ') } : r;
+    });
 }
 
 export const STATUS_COLUMNS = ['pid', 'learner', 'cond', 'lastActive', 'daysSince', 'events', 'lessonsDone', 'helpDecisions', 'soloAfterHelp', 'memoryChecks', 'memoryPassed', 'preTest', 'postTest', 'delayedTest', 'notesOpened', 'flags'];

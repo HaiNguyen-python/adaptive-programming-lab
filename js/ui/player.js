@@ -72,7 +72,8 @@ export function openPlayer({ session, course, onClose }) {
   const prog = h('i');
   const progBox = h('div.player-progress', { role: 'progressbar', 'aria-label': 'Progress', 'aria-valuemin': '0', 'aria-valuemax': '100' }, prog);
   const count = h('span.player-count');
-  // Right first time, in a row. Shown for fun only: it does not change XP, so it adds no reason to avoid help.
+  // Right first time, in a row. For fun only: it gives no XP. It is not shown in a study, because a streak that
+  // breaks when help is used could discourage asking for help, which is the behaviour the study measures.
   let combo = 0;
   const comboEl = h('span.player-combo', { 'aria-live': 'polite' });
   function paintCombo(bump) {
@@ -325,7 +326,9 @@ export function openPlayer({ session, course, onClose }) {
         ? `You remembered this ${r.memory.gapDays <= 0 ? 'today' : `after ${plural(r.memory.gapDays, 'day')}`}. Nova will check it again ${relDay(r.memory.nextInDays)}.`
         : 'This one faded a little. Nova will bring it back tomorrow.', 'small'));
     }
-    if (correct && it.firstTry === true && !it.helps.length && !it.walkthrough) { combo += 1; paintCombo(true); } else { combo = 0; paintCombo(false); }
+    if (!state.study) {
+      if (correct && it.firstTry === true && !it.helps.length && !it.walkthrough) { combo += 1; paintCombo(true); } else { combo = 0; paintCombo(false); }
+    }
     let fb;
     if (correct) {
       play('right');
@@ -590,9 +593,12 @@ export function openPlayer({ session, course, onClose }) {
           tile(`${s.practice.clean}/${s.practice.total}`, 'right on the first try'),
           tile(`${s.checks.right}/${s.checks.total}`, s.checks.total === 1 ? 'solo check passed' : 'solo checks passed')),
         lesson.goals && lesson.goals.length ? h('div.recap', h('h4', 'What you can do now'), h('ul.recap-list', lesson.goals.map((g) => h('li', { html: iconSvg('check') }, md(g))))) : null,
-        h('div.note-card', { html: iconSvg('flame', 'ic') }, h('div',
+        out.firstTime ? h('div.note-card', { html: iconSvg('flame', 'ic') }, h('div',
           h('h4', h('span', 'One flame lit '), flamesEl(flames(concept))),
-          md('Nova will check this idea again **tomorrow** and **one week later**, without help. Passing those checks lights the other two flames.', 'small'))));
+          md('Nova will check this idea again **tomorrow** and **one week later**, without help. Passing those checks lights the other two flames.', 'small')))
+          : h('div.note-card', { html: iconSvg('flame', 'ic') }, h('div',
+            h('h4', h('span', 'Extra practice '), flamesEl(flames(concept))),
+            md('Practice keeps an idea fresh. Your memory checks stay on their own schedule.', 'small'))));
       if (s.helpTotal) {
         const passed = s.checks.right === s.checks.total;
         box.append(h('div.note-card', { html: iconSvg('bulb', 'ic') }, h('div', h('h4', `You asked for help ${s.helpTotal === 1 ? 'once' : `${s.helpTotal} times`}`),

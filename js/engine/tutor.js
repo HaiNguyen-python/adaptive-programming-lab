@@ -23,7 +23,7 @@
 import { isItem, isBuildItem } from './content.js';
 import {
   getConcept, updateMastery, guessProb, markLearned, applyMemoryCheck, pickPoolItem,
-  dueConcepts, strength, daysLater, daysBetween, startOfDay, checkGapDays,
+  dueConcepts, strength, daysLater, daysBetween, startOfDay, checkGapDays, isDue,
 } from './mastery.js';
 import { priorKnowledge, contextKey, availableArms, chooseHelp, updateBandit, HELP_COST } from './help-policy.js';
 import { XP, addXp, checkBadges } from './rewards.js';
@@ -71,10 +71,15 @@ export function startReview({ state, lessonIds, now, max = 8, log }) {
   return s;
 }
 
-/** Free practice on the weakest learned ideas. It trains, but does not move the memory-check dates. */
-export function startPractice({ state, lessonIds, now, max = 6, log }) {
+/**
+ * Free practice on the weakest learned ideas. It trains, but does not move the memory-check dates. Ideas with a
+ * memory check due (and any in `exclude`, such as lessons whose one-week unit test is due) are left out, so the
+ * unaided checks are not practised with feedback just before they are taken.
+ */
+export function startPractice({ state, lessonIds, now, max = 6, log, exclude = [] }) {
   const s = baseSession('practice', now, {});
-  const learned = lessonIds.filter((id) => state.concepts[id] && state.concepts[id].stage >= 1);
+  const skip = new Set(exclude);
+  const learned = lessonIds.filter((id) => state.concepts[id] && state.concepts[id].stage >= 1 && !isDue(state.concepts[id], now) && !skip.has(id));
   learned.sort((a, b) => strength(state.concepts[a], now) - strength(state.concepts[b], now));
   for (const id of learned.slice(0, max)) s.queue.push(checkEntry(id, 'extra'));
   s.queue.push({ type: 'summary' });

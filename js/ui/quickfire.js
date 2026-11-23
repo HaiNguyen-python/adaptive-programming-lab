@@ -33,6 +33,7 @@ const multiplier = (combo) => (combo >= 8 ? 3 : combo >= 4 ? 2 : 1);
 
 export function openQuickFire(course) {
   const state = store.state;
+  if (state.study) return; // never in a study: it would add unplanned practice before the delayed checks
   const pool = quickFirePool(state, course);
   if (pool.length < 4) return;
   const best = (state.quickfire && state.quickfire[course.id]) || 0;
@@ -46,9 +47,11 @@ export function openQuickFire(course) {
   let locked = false;
   const run = { score: 0, right: 0, total: 0, combo: 0, bestCombo: 0, start: 0 };
   let keyHandler = null;
+  let nextQ = null;
 
   function close() {
     clearInterval(timer);
+    clearTimeout(nextQ);
     document.removeEventListener('keydown', onKey);
     root.remove();
     if (appEl) appEl.inert = false;
@@ -69,13 +72,15 @@ export function openQuickFire(course) {
       h('ul.qf-rules',
         h('li', h('b', `${POINTS} points`), ' for each right answer'),
         h('li', h('b', '4 in a row'), ' doubles the points, ', h('b', '8 in a row'), ' triples them'),
-        h('li', 'Keys ', h('kbd', '1'), ' ', h('kbd', '2'), ' ', h('kbd', '3'), ' pick an answer')),
+        h('li', 'Number keys ', h('kbd', '1'), ' to ', h('kbd', '4'), ' pick an answer')),
       best ? h('p.qf-best', `Your best: ${best}`) : null,
       h('button.btn.btn--primary.btn--lg', { type: 'button', onclick: start }, 'Start')));
     root.focus();
   }
 
   function start() {
+    clearInterval(timer);
+    clearTimeout(nextQ);
     order = shuffle(rng, pool);
     at = 0;
     Object.assign(run, { score: 0, right: 0, total: 0, combo: 0, bestCombo: 0, start: Date.now() });
@@ -133,7 +138,7 @@ export function openQuickFire(course) {
         play('wrong');
       }
       paintCombo();
-      setTimeout(() => { if (Date.now() < deadline) question(); else finish(); }, ok ? 420 : 1100);
+      nextQ = setTimeout(() => { if (!root.isConnected) return; if (Date.now() < deadline) question(); else finish(); }, ok ? 420 : 1100);
     }
     keyHandler = (e) => { const n = Number(e.key); if (n >= 1 && n <= btns.length) { e.preventDefault(); pick(n - 1); } };
     root.replaceChildren(h('div.qf-card.qf-play',

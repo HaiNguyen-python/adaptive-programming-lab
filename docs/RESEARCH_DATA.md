@@ -84,7 +84,7 @@ testing tool was in use (not possible in a study). `session` links events of one
 | `ai_explain_feedback` | decision, itemId, model, text | the AI tutor answered what the learner wrote when explaining a hint |
 | `lab_ai_hint` | lang, chars, hadError, model, text | a hint about the learner's own code in the Playground |
 | `test_skipped` | test, unit, course | the learner skipped a unit's starting check (not possible in a study) |
-| `notes_opened` | lessonId, course, shown | the learner opened a lesson's notes after finishing it. `shown: false` means a memory check was due, so the notes stayed closed until it was taken (the unaided check is not contaminated) |
+| `notes_opened` | lessonId, course, shown, lock | the learner opened a lesson's notes after finishing it. `shown: false` means the notes stayed closed because an unaided measure was due first: `lock: memory` (the lesson's memory check) or `lock: unit-test` (its unit's one-week test). While locked, the lesson cannot be practised either, and free practice leaves those ideas out |
 | `quickfire_start` | course, pool | a Quick fire round started (60 seconds of "what does this print?" from finished lessons; not offered in a study) |
 | `quickfire_round` | course, score, right, total, bestCombo, record, ms | a Quick fire round ended. It never changes mastery or memory checks, so it does not touch the outcome measures |
 
@@ -321,3 +321,10 @@ project keeps its data and is restored from the Supabase dashboard. Download the
 **Abuse.** The publishable key is public by design. Someone who knows an open study code could send fake rows
 for made-up learner codes; they cannot read or change anything. Use study codes that are not easy to guess,
 close studies when collection ends, and check the participant codes against your list when analysing.
+
+**Reliability of sending.** Each send repeats the last 10 minutes of events (the database skips repeats), so an
+event written late is not lost; a sending mark set by a wrong device clock is ignored. A row the database refuses
+is set aside after the batch is narrowed down to it, so it cannot block later data. After a failure the device
+waits longer each time (up to 15 minutes); the send when the tab is hidden always runs, with `keepalive` when the
+data is small enough to survive the tab closing. The participant monitor flags a participant code that appears on
+more than one device (two devices, or a reinstall), so a person is not counted twice.

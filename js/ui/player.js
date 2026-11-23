@@ -72,10 +72,18 @@ export function openPlayer({ session, course, onClose }) {
   const prog = h('i');
   const progBox = h('div.player-progress', { role: 'progressbar', 'aria-label': 'Progress', 'aria-valuemin': '0', 'aria-valuemax': '100' }, prog);
   const count = h('span.player-count');
+  // Right first time, in a row. Shown for fun only: it does not change XP, so it adds no reason to avoid help.
+  let combo = 0;
+  const comboEl = h('span.player-combo', { 'aria-live': 'polite' });
+  function paintCombo(bump) {
+    comboEl.replaceChildren(...(combo >= 3 ? [h('span', { html: iconSvg('flame') }), h('span', `${combo} in a row`)] : []));
+    comboEl.classList.toggle('is-on', combo >= 3);
+    if (bump && combo >= 3) { comboEl.classList.remove('is-bump'); void comboEl.offsetWidth; comboEl.classList.add('is-bump'); }
+  }
   const stage = h('div.player-stage');
   const bar = h('div.player-bar');
   const root = h('div.player', { role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Learning session', tabindex: '-1' },
-    h('div.player-top', h('button.icon-btn', { type: 'button', 'aria-label': 'Close', onclick: () => tryClose(), html: iconSvg('x') }), progBox, count),
+    h('div.player-top', h('button.icon-btn', { type: 'button', 'aria-label': 'Close', onclick: () => tryClose(), html: iconSvg('x') }), progBox, comboEl, count),
     stage, bar);
   let it = null;          // what the learner has done on the item on screen
   let notesSeen = 0;
@@ -317,6 +325,7 @@ export function openPlayer({ session, course, onClose }) {
         ? `You remembered this ${r.memory.gapDays <= 0 ? 'today' : `after ${plural(r.memory.gapDays, 'day')}`}. Nova will check it again ${relDay(r.memory.nextInDays)}.`
         : 'This one faded a little. Nova will bring it back tomorrow.', 'small'));
     }
+    if (correct && it.firstTry === true && !it.helps.length && !it.walkthrough) { combo += 1; paintCombo(true); } else { combo = 0; paintCombo(false); }
     let fb;
     if (correct) {
       play('right');

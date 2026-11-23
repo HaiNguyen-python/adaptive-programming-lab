@@ -41,5 +41,5 @@ export function applyLook() {
   root.dataset.size = s.textSize;
   root.dataset.motion = s.reduceMotion ? 'off' : 'on';
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = theme === 'day' ? '#f1f6ff' : '#151933';
+  if (meta) meta.content = theme === 'day' ? '#f3f4f7' : '#14171d';
 }

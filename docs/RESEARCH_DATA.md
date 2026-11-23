@@ -83,6 +83,8 @@ testing tool was in use (not possible in a study). `session` links events of one
 | `ai_explain_feedback` | decision, itemId, model, text | the AI tutor answered what the learner wrote when explaining a hint |
 | `lab_ai_hint` | lang, chars, hadError, model, text | a hint about the learner's own code in the Playground |
 | `test_skipped` | test, unit, course | the learner skipped a unit's starting check (not possible in a study) |
+| `quickfire_start` | course, pool | a Quick fire round started (60 seconds of "what does this print?" from finished lessons; not offered in a study) |
+| `quickfire_round` | course, score, right, total, bestCombo, record, ms | a Quick fire round ended. It never changes mastery or memory checks, so it does not touch the outcome measures |
 
 Unit tests are sessions with `kind: 'test'` (`session_start` also has `test`: `pre`, `post` or `delayed`, and
 `unit`). Their questions are `item_result` rows with `role` `test-pre`, `test-post` or `test-delayed`.

@@ -46,6 +46,7 @@ export function newState(profile) {
     placement: {},
     tests: {},               // unitId -> { pre, post, delayed: { t, right, total, items }, preSkipped }
     recentItems: [],
+    quickfire: {},           // courseId -> best Quick fire score (practice for fun, not in studies)
   };
 }
 
@@ -58,7 +59,7 @@ export function repairState(state) {
   out.settings.ai = { ...fresh.settings.ai, ...((state.settings && state.settings.ai) || {}) };
   out.counters = { ...fresh.counters, ...(state.counters || {}) };
   out.counters.helps = { ...fresh.counters.helps, ...((state.counters && state.counters.helps) || {}) };
-  for (const key of ['days', 'lessons', 'concepts', 'bandit', 'badges', 'placement', 'tests']) {
+  for (const key of ['days', 'lessons', 'concepts', 'bandit', 'badges', 'placement', 'tests', 'quickfire']) {
     if (!out[key] || typeof out[key] !== 'object') out[key] = {};
   }
   if (!Array.isArray(out.decisions)) out.decisions = [];

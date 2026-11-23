@@ -1,7 +1,7 @@
-/** The Learn screen: today's goal, memory checks that are due, and the trail of lessons. */
+/** The Learn screen: the next lesson with its code, memory checks that are due, Quick fire and the course map. */
 import { h, md, plural, relDay, formatDate } from '../lib/dom.js';
 import { iconSvg } from '../lib/icons.js';
-import { nova, novaSvg, treeSvg, campSvg, lanternSvg, svgEl } from '../lib/art.js';
+import { nova, novaSvg, lanternSvg, svgEl } from '../lib/art.js';
 import { store, save } from '../store.js';
 import { now, log, emitChange } from '../app.js';
 import * as catalog from '../catalog.js';
@@ -9,12 +9,10 @@ import { APP } from '../config.js';
 import { startLesson, startReview, startPlacement, lessonStatus, nextLesson, courseProgress, isDone } from '../engine/tutor.js';
 import { dueConcepts, flames, isDue, daysBetween, strength } from '../engine/mastery.js';
 import { levelInfo, streak, xpToday } from '../engine/rewards.js';
-import { openSheet, flamesEl, ringEl, bar } from './common.js';
+import { openSheet, flamesEl, bar, codeBlock, resultTable, previewFrame } from './common.js';
+import { openQuickFire, quickFirePool } from './quickfire.js';
 import { openPlayer } from './player.js';
 import { testStatus, startUnitTest, skipPreTest, dueDelayedTests } from '../engine/unit-tests.js';
-
-const ROW = 132;
-const TOP = 54;
 
 export function currentCourse() {
   const state = store.state;
@@ -159,116 +157,164 @@ export function certificate(course) {
   });
 }
 
-// ---------------------------------------------------------------- trail
+// ---------------------------------------------------------------- course map
 
-function campBlock(course, unit, unitIndex, firstIndex, width, openId) {
+/** Three short bars: learned, kept the next day, kept for a week. */
+function keptEl(n) {
+  return h('span.kept', { role: 'img', 'aria-label': n >= 3 ? 'Kept for a week' : n === 2 ? 'Kept the next day' : 'Learned' },
+    [0, 1, 2].map((i) => h(`i${i < n ? '.is-on' : ''}`)));
+}
+
+function unitBlock(course, unit, unitIndex, openId) {
   const state = store.state;
-  const amp = Math.max(40, Math.min(130, width * 0.24));
-  const cx = width / 2;
   const n = unit.lessons.length;
-  const height = TOP + (n - 1) * ROW + 118;
-  const pts = unit.lessons.map((l, i) => {
-    const k = Math.sin(((firstIndex + i) * Math.PI) / 2);
-    return { x: cx + k * amp, y: TOP + i * ROW, k, lesson: l, status: lessonStatus(state, course, l) };
-  });
-  const seg = (a, b) => `M${a.x.toFixed(1)} ${a.y}C${a.x.toFixed(1)} ${a.y + ROW / 2} ${b.x.toFixed(1)} ${b.y - ROW / 2} ${b.x.toFixed(1)} ${b.y}`;
-  let base = '';
-  let lit = '';
-  for (let i = 0; i < pts.length - 1; i++) {
-    base += seg(pts[i], pts[i + 1]);
-    if (pts[i].status === 'done' && pts[i + 1].status !== 'locked') lit += seg(pts[i], pts[i + 1]);
-  }
-  const svg = `<svg class="path" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">`
-    + `<path d="${base}" fill="none" stroke="var(--path)" stroke-width="9" stroke-linecap="round" stroke-dasharray="1 20"/>`
-    + (lit ? `<path d="${lit}" fill="none" stroke="var(--band)" stroke-width="9" stroke-linecap="round" stroke-dasharray="1 20"/>` : '')
-    + '</svg>';
-  const trees = h('div.trees');
-  if (width >= 380) {
-    pts.forEach((p, i) => {
-      const g = firstIndex + i;
-      const side = p.k > 0.1 ? -1 : p.k < -0.1 ? 1 : (g % 2 ? 1 : -1);
-      const size = 46 + ((g * 37) % 30);
-      const x = cx + side * (amp + 96 + ((g * 53) % 46));
-      if (x < 6 || x > width - size * 0.67 - 6) return;
-      const t = svgEl(treeSvg(size, (g % 2) + 1));
-      t.style.left = `${Math.round(x)}px`;
-      t.style.top = `${p.y - 10 + ((g * 29) % 40)}px`;
-      trees.append(t);
-    });
-  }
-  const nodes = pts.map((p) => {
-    const { lesson, status } = p;
-    const concept = state.concepts[lesson.id];
-    const due = status === 'done' && isDue(concept, now());
-    const here = lesson.id === openId;
-    const label = status === 'locked' ? `${lesson.title}. Locked.` : status === 'done' ? `${lesson.title}. Done.${due ? ' Memory check ready.' : ''}` : `${lesson.title}. Start.`;
-    return h(`div.node.node--${status}${due ? '.is-due' : ''}${p.k > 0.1 ? '.is-left' : ''}`, { style: { left: `${p.x.toFixed(1)}px`, top: `${p.y - 39}px` } },
-      h('button.node-btn', { type: 'button', 'aria-label': label, onclick: () => lessonSheet(course, lesson), html: iconSvg(status === 'done' ? 'flame' : status === 'open' ? 'play' : 'lock') }),
-      here ? svgEl(novaSvg('happy', state.profile.color, 'nova-here')) : null,
-      h('div.node-label', lesson.title),
-      status === 'done' ? flamesEl(flames(concept)) : null);
-  });
   const doneCount = unit.lessons.filter((l) => isDone(state, l.id)).length;
   let testBtn = null;
   if (testsOn(state)) {
     const ts = testStatus(state, unit, now());
-    if (ts.next === 'post') testBtn = h('button.btn.btn--primary.btn--sm', { type: 'button', html: iconSvg('award'), onclick: () => launchTest(course, unit, 'post') }, 'Unit test');
-    else if (ts.next === 'delayed' && ts.due) testBtn = h('button.btn.btn--primary.btn--sm', { type: 'button', html: iconSvg('award'), onclick: () => launchTest(course, unit, 'delayed') }, 'One-week test');
+    if (ts.next === 'post') testBtn = h('button.btn.btn--accent.btn--sm', { type: 'button', html: iconSvg('award'), onclick: () => launchTest(course, unit, 'post') }, 'Take the unit test');
+    else if (ts.next === 'delayed' && ts.due) testBtn = h('button.btn.btn--accent.btn--sm', { type: 'button', html: iconSvg('award'), onclick: () => launchTest(course, unit, 'delayed') }, 'Take the one-week test');
     else if (ts.next === 'delayed') testBtn = h('span.tag', { title: 'The unit test comes back one week after you took it' }, `One-week test ${relDay(daysBetween(now(), ts.dueAt))}`);
   }
-  const pct = Math.round((doneCount / n) * 100);
-  return h('section.camp', { 'aria-label': `Unit ${unitIndex + 1}: ${unit.title}`, 'data-band': String(unitIndex % 5) },
-    h('div.camp-head', h('div.camp-badge', svgEl(campSvg(doneCount > 0))),
-      h('div.grow', h('div.camp-num', `Unit ${unitIndex + 1}`), h('h2', unit.title), h('div.camp-blurb', unit.blurb),
-        h('div.camp-meter', { role: 'img', 'aria-label': `${doneCount} of ${n} lessons done` }, h('span', { style: { width: `${pct}%` } })),
-        testBtn ? h('div', { style: { marginTop: '10px' } }, testBtn) : null),
-      h('div.camp-count', `${doneCount}/${n}`)),
-    h('div.camp-path', { style: { '--h': `${height}px` }, html: svg }, trees, nodes));
+  const state2 = doneCount === n ? 'is-done' : doneCount > 0 || unit.lessons.some((l) => l.id === openId) ? 'is-active' : 'is-later';
+  const rows = unit.lessons.map((lesson, i) => {
+    const status = lessonStatus(state, course, lesson);
+    const concept = state.concepts[lesson.id];
+    const due = status === 'done' && isDue(concept, now());
+    const here = lesson.id === openId;
+    const label = status === 'locked' ? `${lesson.title}. Locked.` : status === 'done' ? `${lesson.title}. Done.${due ? ' Memory check ready.' : ''}` : `${lesson.title}. Start.`;
+    return h(`li.lrow.lrow--${status}${here ? '.is-here' : ''}`,
+      h('button.lrow-btn', { type: 'button', 'aria-label': label, onclick: () => lessonSheet(course, lesson) },
+        h('span.lrow-dot', { 'aria-hidden': 'true', html: status === 'done' ? iconSvg('check') : status === 'locked' ? '' : '' }),
+        h('span.lrow-num', { 'aria-hidden': 'true' }, `${unitIndex + 1}.${i + 1}`),
+        h('span.lrow-title', lesson.title),
+        h('span.lrow-meta',
+          status === 'done' ? (due ? h('span.lrow-due', 'Check ready') : keptEl(flames(concept))) : null,
+          status === 'open' ? h('span.lrow-go', here ? 'Up next' : 'Start') : null,
+          status === 'locked' ? h('span.lrow-lock', { html: iconSvg('lock') }) : null)));
+  });
+  return h(`section.unit.${state2}`, { 'aria-label': `Unit ${unitIndex + 1}: ${unit.title}` },
+    h('header.unit-head',
+      h('span.unit-n', { 'aria-hidden': 'true' }, String(unitIndex + 1).padStart(2, '0')),
+      h('div.unit-text',
+        h('h2', unit.title),
+        h('p', unit.blurb)),
+      h('div.unit-side',
+        h('span.unit-count', `${doneCount} of ${n}`),
+        h('span.unit-bar', { 'aria-hidden': 'true' }, h('i', { style: { width: `${Math.round((doneCount / n) * 100)}%` } })))),
+    testBtn ? h('div.unit-test', testBtn) : null,
+    h('ol.lrows', rows));
 }
 
-function todayCard(course) {
+let typedOnce = false;
+
+/** The lesson's first worked code, set large: the one bold element on the Learn screen. */
+function codeShowcase(course, lesson) {
+  const step = lesson.steps.find((s) => s.kind === 'teach' && s.code) || lesson.steps.find((s) => s.code);
+  if (!step) return null;
+  const lang = course.lang;
+  const file = { python: 'lesson.py', javascript: 'lesson.js', sql: 'query.sql', web: 'page.html' }[lang] || 'lesson';
+  const block = codeBlock(step.code, lang === 'web' ? 'web' : lang, lang === 'python' || lang === 'javascript' ? { output: step.error ? `${step.output ? `${step.output}\n` : ''}${step.error}` : step.output, error: !!step.error } : {});
+  const extra = lang === 'sql' && step.result ? resultTable(step.result) : lang === 'web' && step.preview ? previewFrame(step.code, 120) : null;
+  const panel = h('figure.showcase', { 'aria-label': `Code from ${lesson.title}` },
+    h('figcaption.showcase-bar', h('span.showcase-dots', { 'aria-hidden': 'true' }, h('i'), h('i'), h('i')), h('span', file)),
+    block, extra);
+  const reduce = document.documentElement.dataset.motion === 'off' || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!typedOnce && !reduce) {
+    typedOnce = true;
+    const codeEl = block.querySelector('pre.code code');
+    const out = block.querySelector('pre.out');
+    const html = codeEl.innerHTML;
+    const text = step.code;
+    codeEl.textContent = '';
+    if (out) out.style.visibility = 'hidden';
+    const per = Math.max(8, Math.min(28, 900 / text.length));
+    let i = 0;
+    const tick = () => {
+      if (!codeEl.isConnected) return;
+      i = Math.min(text.length, i + 2);
+      codeEl.textContent = text.slice(0, i);
+      codeEl.classList.add('is-typing');
+      if (i < text.length) setTimeout(tick, per);
+      else { codeEl.innerHTML = html; codeEl.classList.remove('is-typing'); if (out) { out.style.visibility = ''; out.classList.add('is-arrived'); } }
+    };
+    setTimeout(tick, 250);
+  }
+  return panel;
+}
+
+function nextPanel(course) {
   const state = store.state;
   const goal = state.settings.dailyGoal;
   const today = xpToday(state, now());
   const st = streak(state, now());
   const next = nextLesson(state, course);
-  const lines = [];
-  if (today >= goal) lines.push('Daily goal reached. Anything more is a bonus.');
-  else if (today > 0) lines.push(`${goal - today} XP to go for today's goal.`);
-  else lines.push(st.count ? `Do one lesson today to keep your ${st.count}-day streak.` : 'One short lesson is enough to start a streak.');
-  const action = next
-    ? h('button.btn.btn--primary', { type: 'button', onclick: () => launchLesson(course, next) }, today || state.xp ? 'Continue' : 'Start learning')
-    : h('button.btn.btn--primary', { type: 'button', onclick: () => certificate(course), html: iconSvg('award') }, 'See your certificate');
-  const hr = new Date(now()).getHours();
-  const hello = hr < 5 ? 'Up late' : hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
-  const name = (state.profile.name || '').trim().split(/\s+/)[0];
-  const mood = today >= goal ? 'cheer' : today > 0 ? 'proud' : 'happy';
-  return h('div.hero',
-    h('div.hero-sky', { 'aria-hidden': 'true' }, h('span.hero-sun'), h('span.hero-cloud.c1'), h('span.hero-cloud.c2'), h('span.hero-hill.h1'), h('span.hero-hill.h2')),
-    h('div.hero-nova', { 'aria-hidden': 'true', html: novaSvg(mood, state.profile.color) }),
-    h('div.hero-body',
-      h('div.hero-hello', name ? `${hello}, ${name}!` : `${hello}!`),
-      h('h2.hero-title', next ? next.title : `${course.title} complete!`),
-      h('div.hero-line', lines[0]),
-      h('div.hero-actions', action)),
-    h('div.hero-ring', ringEl(today, goal, String(today), `of ${goal} XP`)));
+  let line;
+  if (today >= goal) line = 'Daily goal reached. Anything more is a bonus.';
+  else if (today > 0) line = `${goal - today} XP to go for today's goal.`;
+  else line = st.count ? `One lesson today keeps your ${st.count}-day streak.` : 'One short lesson starts a streak.';
+  const goalMeter = h('div.goal', { title: `${today} of ${goal} XP today` },
+    h('div.goal-text', h('b', `${Math.min(today, goal)}/${goal} XP`), h('span', line)),
+    h('div.goal-bar', { role: 'img', 'aria-label': `${today} of ${goal} XP today` }, h('i', { style: { width: `${Math.min(100, Math.round((today / goal) * 100))}%` } })));
+  if (!next) {
+    return h('section.next.next--done',
+      h('div.next-text', h('p.next-where', `${course.title}, all lessons done`), h('h1.next-title', 'You finished the course'),
+        h('p.next-line', 'Memory checks keep it fresh. Quick fire keeps it fast.'),
+        h('div.next-actions', h('button.btn.btn--primary.btn--lg', { type: 'button', onclick: () => certificate(course), html: iconSvg('award') }, 'See your certificate')),
+        goalMeter));
+  }
+  const unit = course.units.find((u) => u.id === next.unitId);
+  const ui = course.units.indexOf(unit);
+  const li = unit.lessons.indexOf(next);
+  const started = today || state.xp;
+  return h('section.next', { 'aria-label': 'Your next lesson' },
+    h('div.next-text',
+      h('p.next-where', `Unit ${ui + 1}, lesson ${li + 1} of ${unit.lessons.length}`),
+      h('h1.next-title', next.title),
+      h('ul.next-goals', next.goals.slice(0, 3).map((g) => h('li', md(g)))),
+      h('div.next-actions',
+        h('button.btn.btn--primary.btn--lg', { type: 'button', onclick: () => launchLesson(course, next) }, started ? 'Continue' : 'Start the first lesson'),
+        h('span.next-time', `About ${Math.max(3, Math.round(next.steps.length * 0.55))} min`)),
+      goalMeter),
+    codeShowcase(course, next));
 }
 
-function memoryCard(due) {
-  return h('div.card.memory-card', svgEl(lanternSvg(true)),
-    h('div.grow', h('h3', `${plural(due, 'idea')} ready for a memory check`), h('div.small.muted', 'A quick check, without help, keeps what you learned alive.')),
-    h('button.btn.btn--primary.btn--sm', { type: 'button', onclick: launchReview }, 'Start'));
+function noticeRow({ icon, title, text, action, onclick, tone = 'memory' }) {
+  return h(`div.notice.notice--${tone}`, icon,
+    h('div.grow', h('h3', title), h('p', text)),
+    h('button.btn.btn--sm', { type: 'button', onclick }, action));
 }
 
-function statCards(course) {
+function quickFireRow(course) {
+  const state = store.state;
+  if (state.study) return null;
+  const pool = quickFirePool(state, course);
+  const best = (state.quickfire && state.quickfire[course.id]) || 0;
+  if (pool.length < 4) {
+    return h('div.notice.notice--fire.is-locked', h('span.notice-ic', { html: iconSvg('bolt') }),
+      h('div.grow', h('h3', 'Quick fire'), h('p', 'Finish two lessons to unlock a 60-second round of "what does this print?"')));
+  }
+  return noticeRow({
+    icon: h('span.notice-ic', { html: iconSvg('bolt') }),
+    title: 'Quick fire',
+    text: best ? `60 seconds of "what does this print?" from your lessons. Your best: ${best}.` : '60 seconds of "what does this print?" from your lessons. Answer fast, build a combo.',
+    action: 'Play',
+    tone: 'fire',
+    onclick: () => openQuickFire(course),
+  });
+}
+
+function sideCards(course) {
   const state = store.state;
   const lv = levelInfo(state.xp);
   const p = courseProgress(state, course);
   const lasting = Object.values(state.concepts).filter((c) => c.best >= 3).length;
   return [
-    h('div.card.stack', h('div.row', h('h3.grow', `Level ${lv.level}`), h('span.small.muted', `${state.xp} XP`)), bar(lv.progress), h('div.small.muted', `${lv.to - state.xp} XP to level ${lv.level + 1}`)),
-    h('div.card.stack', h('div.row', h('h3.grow', course.title), h('span.small.muted', `${p.done} of ${p.total} lessons`)), bar(p.ratio),
-      h('div.small.muted', lasting ? `${plural(lasting, 'idea')} remembered after a week.` : 'Flames show how well each lesson has stuck: learned, next day, one week.')),
+    h('div.side-card',
+      h('div.side-row', h('span', 'Level'), h('b', String(lv.level))), bar(lv.progress), h('p', `${lv.to - state.xp} XP to level ${lv.level + 1}`)),
+    h('div.side-card',
+      h('div.side-row', h('span', course.title), h('b', `${p.done}/${p.total}`)), bar(p.ratio),
+      h('p', lasting ? `${plural(lasting, 'idea')} kept for a week.` : 'The three bars on a lesson fill as you keep it: learned, next day, one week.')),
   ];
 }
 
@@ -281,46 +327,34 @@ export function learnPage(root) {
   }
   if (state.course !== course.id) { state.course = course.id; save(); }
   const st = streak(state, now());
-  const lv = levelInfo(state.xp);
   const due = dueCount();
   const next = nextLesson(state, course);
   const page = h('div.page.page--wide', { 'data-accent': course.accent });
-  const trail = h('div.trail');
-  const main = h('div.stack-l',
+  const notices = [];
+  if (due) notices.push(noticeRow({ icon: svgEl(lanternSvg(true)), title: `${plural(due, 'idea')} ready for a memory check`, text: 'One question each, without help. It keeps what you learned.', action: 'Check now', onclick: launchReview }));
+  if (testsOn(state)) {
+    for (const { course: c, unit } of dueDelayedTests(state, catalog.courses(), now())) {
+      notices.push(noticeRow({ icon: svgEl(lanternSvg(true)), title: `One-week test: ${unit.title}`, text: 'A week has passed since your unit test. What stayed with you?', action: 'Start', onclick: () => launchTest(c, unit, 'delayed') }));
+    }
+  }
+  const qf = quickFireRow(course);
+  if (qf) notices.push(qf);
+  const main = h('div.learn-main',
     h('div.topbar',
       h('button.course-btn', { type: 'button', 'aria-label': `Course: ${course.title}. Change course.`, onclick: coursePicker, html: `<span class="glyph">${course.glyph}</span><span>${course.title}</span>${iconSvg('down')}` }),
       h('span.grow'),
       h(`span.pill.pill--streak${st.doneToday ? '' : '.is-dim'}`, { title: st.doneToday ? 'Streak: days in a row' : 'Learn today to keep your streak', html: iconSvg('flame') }, h('span', String(st.count)), h('span.sr', ' day streak')),
-      h('span.pill.pill--xp', { title: `Level ${lv.level}`, html: iconSvg('bolt') }, h('span', String(state.xp)), h('span.sr', ' XP'))),
-    todayCard(course),
-    due ? memoryCard(due) : null,
-    ...(testsOn(state) ? dueDelayedTests(state, catalog.courses(), now()).map(({ course: c, unit }) => h('div.card.memory-card', svgEl(lanternSvg(true)),
-      h('div.grow', h('h3', `One-week test: ${unit.title}`), h('div.small.muted', 'A week has passed since your unit test. What stayed with you?')),
-      h('button.btn.btn--primary.btn--sm', { type: 'button', onclick: () => launchTest(c, unit, 'delayed') }, 'Start'))) : []),
-    h('div.only-narrow.stack', statCards(course)),
-    trail);
-  page.append(h('div.learn-grid', main, h('aside.aside-cards.only-wide', { 'aria-label': 'Your progress' }, statCards(course),
-    h('div.card.stack', h('h3', 'How this works'),
-      md('**Try first.** Nova helps after your first attempt, with a hint or a similar example, never the answer.\n\n**Prove it alone.** After help, you get one question on your own.\n\n**Make it stick.** Nova checks again the next day and one week later.', 'small.muted')))));
+      h('span.pill.pill--xp', { title: `Level ${levelInfo(state.xp).level}`, html: iconSvg('bolt') }, h('span', String(state.xp)), h('span.sr', ' XP'))),
+    nextPanel(course),
+    notices.length ? h('div.notices', notices) : null,
+    h('div.map-head', h('h2', 'Course map'), h('span', `${course.units.length} units, ${plural(course.lessons.length, 'lesson')}`)),
+    h('div.map', course.units.map((u, i) => unitBlock(course, u, i, next ? next.id : null))));
+  page.append(h('div.learn-grid', main, h('aside.side.only-wide', { 'aria-label': 'Your progress' }, sideCards(course),
+    h('div.side-card.side-how', h('h3', 'How Nova teaches'),
+      h('ol',
+        h('li', h('b', 'Try first. '), 'Help opens after your first attempt: a hint or a similar example, never the answer.'),
+        h('li', h('b', 'Prove it alone. '), 'After help, one question on your own.'),
+        h('li', h('b', 'Keep it. '), 'Nova checks again the next day and one week later.'))))));
   root.append(page);
-
-  function drawTrail() {
-    const width = Math.max(280, Math.floor(trail.clientWidth || 560));
-    let first = 0;
-    trail.replaceChildren(...course.units.map((u, i) => {
-      const block = campBlock(course, u, i, first, width, next ? next.id : null);
-      first += u.lessons.length;
-      return block;
-    }));
-  }
-  drawTrail();
-  let lastWidth = trail.clientWidth;
-  if (typeof ResizeObserver !== 'undefined') {
-    const ro = new ResizeObserver(() => {
-      if (!trail.isConnected) { ro.disconnect(); return; }
-      if (Math.abs(trail.clientWidth - lastWidth) > 4) { lastWidth = trail.clientWidth; drawTrail(); }
-    });
-    ro.observe(trail);
-  }
-  return { scrollTo: next ? `[aria-label^="${CSS.escape(next.title)}"]` : null };
+  return { scrollTo: null };
 }
